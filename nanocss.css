@@ -32,13 +32,16 @@ body.darkmode{background-color:#000;color:#ccc}
 .align_y_center{align-self:center}
 
 .flex, .hyper_center{display:flex}
-.wrap{flex-wrap:wrap}
+.flex_wrap{flex-wrap:wrap}
 .flex_center{justify-content:center}
 .flex_spaced{justify-content:space-evenly}
+.flex_between{justify-content:space-between}
+.flex_column{flex-direction:column}
 
 .w100p{width:100%}
 .w90p{width:90%}
 .mxw1200px{max-width:1200px}
+.mh100vh{min-height:100vh}
 .w80px{width:80px}
 .w200px{width:200px}
 
