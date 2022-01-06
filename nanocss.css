@@ -8,11 +8,19 @@ road to :
 
 *{box-sizing:border-box}
 
-body{margin:0; font:1rem sans-serif;background:#fff;color:#444}
+body{font:1rem sans-serif;background:#fff;color:#444}
 
-body.darkmode{background-color:#000;color:#ccc}
+a{text-decoration:none}
+
+img{border:0}
 
 div{position:relative}
+
+body, ul, pre{margin:0}
+
+ul{padding:0;list-style:none}
+
+body.darkmode{background-color:#000;color:#ccc}
 
 /* class */
 
@@ -26,6 +34,7 @@ div{position:relative}
 .flex, .hyper_center{display:flex}
 .wrap{flex-wrap:wrap}
 .flex_center{justify-content:center}
+.flex_spaced{justify-content:space-evenly}
 
 .w100p{width:100%}
 .w90p{width:90%}
@@ -36,6 +45,7 @@ div{position:relative}
 .h40px{height:40px}
 
 .mxa{margin-left:auto;margin-right:auto;}
+.my08{margin-top:.8rem;margin-bottom:.8rem;}
 
 .mt32{margin-top:3.2rem}
 .mt20{margin-top:2rem}
@@ -52,16 +62,34 @@ div{position:relative}
 .py08{padding-top:.8rem;padding-bottom:.8rem;}
 .py20{padding-top:2rem;padding-bottom:2rem;}
 
+.pb08{padding-bottom:.8rem}
+
 .tac{text-align:center}
 .lh40{line-height:40px}
 
 .bor0{border:0}
 .br9{border-radius:9px}
 .br12{border-radius:12px}
+.borb1_666{border-bottom:1px solid #666}
 .back222{background:#222}
 .back444{background:#444}
 
 /* specific */
+
+.tag{ font-size:11pt;font-weight:bold;color:#000;background:#999;margin-bottom:.3rem;padding:.2rem .6rem;border-radius:3px; }
+.tag.tiny{padding-top:0;padding-bottom:0;}
+.tag.big{padding:.8rem 1.4rem;}
+.btn{ background:hsl(212,92%,40%);cursor:pointer;color:#fff; }
+.btn:hover{ color:#888;background:hsl(212,80%,20%); }
+
+.tag.jaune, .btn.jaune{ color:#000;background:hsl(48,100%,40%); }
+.btn.jaune:hover{ background:hsl(48,100%,24%); }
+
+.tag.rouge, .btn.rouge{ color:#fff;background:hsl(0,100%,40%); }
+.btn.rouge:hover{ background:hsl(0,100%,24%); }
+
+.btn:active, .btn.jaune:active, .btn.rouge:active{ color:#888; background:#000; }
+
 
 .hyper_center{
 	height: 100vh;
@@ -70,3 +98,11 @@ div{position:relative}
 }
 
 .hide{display:none}
+
+.case_darkmode{
+    background:#111;
+    color:#aaa;
+    border:1px solid #444;
+    padding:.2rem .2rem .3rem .4rem;
+	border-radius:4px;
+}
