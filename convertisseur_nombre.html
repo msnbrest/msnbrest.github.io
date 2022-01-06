@@ -1,0 +1,64 @@
+
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regex Visualizer</title>
+<link rel="icon" type="image/x-icon" sizes="128x128" href="favicon-128.ico">
+<link rel="stylesheet" href="nanocss.css">
+<script src="nanojs.js"></script>
+<script>
+const go= to=>{
+	const val= _sels("input")[1-to].value;
+	const tmp= to<1? +(val)*1420000: +(val)/1420000;
+	const res= to_h(tmp);
+	_sels("input")[to].value= ~~tmp;
+	_sel("#res"+to).parentElement.classList.remove("hide");
+	_sel("#res"+to).innerHTML= res.value + " " + res.unit +"€";
+},
+
+/**
+* numbers to EN-en human
+* ex: 0.001==0, 0.3==0.30, 1200=1.2K, 198765==198.76k, 250000000==250M, 8123456789==8.12G
+*/
+to_h= val=>{
+	let units=[ "", "K", "M", "G" ], unit= 0;
+
+	if( val>=1E9 ){ val= (val/1E9).toFixed(2); unit= 3; }else
+	if( val>=1E6 ){ val= (val/1E6).toFixed(2); unit= 2;}else
+	if( val>=1E3 ){ val= (val/1E3).toFixed(2); unit= 1;}else
+	if( val<0.01 ){ val= 0; }else{ val= val.toFixed(2); }
+
+	return { value:val, unit:units[unit] };
+},
+
+apu= thiss=>{
+	thiss.parentElement.parentElement.querySelector("input")?.focus();
+	thiss.parentElement.classList.add("hide");
+};
+</script>
+</head><body class="darkmode">
+
+<div class="hyper_center">
+<main class="back222 br12 w90p mxa mxw1200px py20 px20">
+
+	<h1 class="mxa tac mb20">Convertissez votre smic en equivalent Google</h1>
+	<h3 class="mxa tac mb10">Suite à l'amende de 150 millions d'euros à Google (affaire de cookies),<br>
+		j'ai voulu comparer avec une amende de 135€ en equivalent google,<br>
+		ou une saisie de 100€ par rapport à un salaire au smic.</h3>
+
+	<div class="table mxa mt32">Equivalent Google:</div>
+	<div class="flex mt08 mb04 flex_center">
+		<div class="pa w100p flex flex_center"><div id="res0" onclick="apu(this)" class="w200px lh40 h40px back444 tac"></div></div>
+		<input type="number" class="back444 bor0 br9 tac px12 py08" onfocus="go(1)" onkeyup="go(1)">
+	</div>
+	<div class="table mxa mt12">Equivalent Bas Peuple:</div>
+	<div class="flex mt08 mb04 flex_center">
+		<div class="pa w100p flex flex_center"><div id="res1" onclick="apu(this)" class="w200px lh40 h40px back444 tac"></div></div>
+		<input type="number" class="back444 bor0 br9 tac px12 py08" onfocus="go(0)" onkeyup="go(0)">
+	</div>
+</main>
+</div>
+
+<footer>
+todo
+</footer>
+
+</body></html>
