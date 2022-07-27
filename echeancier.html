@@ -1,0 +1,146 @@
+<!DOCTYPE html><html lang="fr"><head><title>histo edf</title><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="nanocss.css">
+<script src="nanojs.js"></script>
+<script>
+
+const tab_debut_echeancier= [],
+
+cent_to_euro= val=> ( val<10?"0.0"+val:val<100?"0."+val:val.replace(/([0-9]{2}$)/g,".$1") )+" €",
+
+mois_to_aamm= m=>(~~(m/12)+1)+"' "+(m-(~~(m/12)*12)+1)+"'' ("+(m+1)+"e)",
+
+init= _=>{ for( let elem of _sels("#js_zone_inputs input[id]") ){ ku(elem,false); } redraw(); },
+
+redraw= _=>{
+
+const get_result_obj= get_result( infos.cents, infos.mois, infos.limit, tab_debut_echeancier );
+
+_sel("#page").innerHTML= tab_limit_and_prefix( get_result_obj[0], get_result_obj[1].slice(0,73) )
+    .map( val=> "<tr><td>"+ (val[0]?mois_to_aamm(val[1]):("<span class='c999'>"+val[1]+"</span>")) +"</td><td>"
+        + (val[0]?cent_to_euro(""+val[2]):("<span class='c999'>"+val[2]+"</span>")) +"</td></tr>" ).join("");
+
+},
+
+
+
+tab_limit_and_prefix= ( prefixs, tab_limited )=>{
+
+if( tab_limited.length<1 ){ return prefixs; }
+
+if( tab_limited.length>72 ){ tab_limited[72]= [ false, "Et bien plus", "encore" ]; }
+
+return prefixs.concat( [ [false, "- Date (année-mois) -", "--- Montant ---"] ] ).concat(tab_limited);
+
+},
+
+
+
+get_result= ( total, duree, limit, tab_debu_ech )=>{
+
+if( total<1 || duree<1 && limit<1 ){
+
+return [[
+    [false, "Total", cent_to_euro(""+(total||0))],
+    [false, "Duree", (duree||0)+" mois"],
+    [false, "Limite", cent_to_euro(""+(limit||0))]
+],[]];
+
+}
+
+let out= [], // is result, key, value
+metadata= [],
+cur= 0;
+
+metadata.push( [false, "Total", cent_to_euro(""+total)] );
+
+if( duree<1 ){
+    duree= Math.ceil(total/limit);
+    metadata.push( [false, "Duree", duree+" mois"] );
+}
+
+if( limit>0 ){ metadata.push( [false, "Limite", cent_to_euro(""+limit)] ); }
+
+tab_debu_ech.forEach( val=> {
+    out.push( [ true, cur, val ] );
+    total-= val;
+    cur++;
+});
+
+let mens= ~~(total/(duree-cur));
+if( limit>0 && mens>limit ){ mens= limit; }
+
+while( cur<(duree-1) ){
+    out.push( [ true, cur, mens ] );
+    total-= mens;
+    cur++;
+}
+
+if( total>0 ){
+    out.push( [ true, cur, total ] );
+}
+
+return [ metadata, out ];
+
+},
+
+
+
+ku= (thiss,force_redraw=true)=>{
+
+const id= thiss.getAttribute("id");
+
+if( id!=null && infos[id]!=null ){
+    infos[id]= +thiss.value||0;
+    force_redraw&&redraw();
+}
+
+};
+
+
+
+let infos= { cents: 0, mois: 0, limit: 0 };
+
+
+
+window.addEventListener("load",init,false);
+
+</script>
+</head><body class="darkmode mh100vh flex flex_column flex_between">
+
+<header class="borb1_666 mb04 back222 py08">
+    <ul class="flex flex_spaced">
+        <li class="my08"><a class="tag btn big jaune" href="index.html">Accueil</a></li>
+    </ul>
+</header>
+
+<main class="back222 br12 w90p mxa mxw1200px py20 px20 my08">
+
+<h1 class="mxa tac mb20 my08">Simu echancier</h1>
+
+<h3 class="mxa tac mb10 my08">Suite à la découverte d'un outil de facturation qui n'a pas d'échéancier automatique, j'ai voulu créer le miens pour voir à quel point c'était compliqué à créer. Et ça ne l'est pas ^^</h3>
+
+<div id="js_zone_inputs" class="flex flex_between mt32 mb10">
+    <div class="tac">
+        <h4>Total (Centimes)</h4>
+        <input class="back2a2a2a bs1fff caaa bor0 br9 tac px12 py08" onkeyup="ku(this)" id="cents" value="">
+    </div>
+    <div class="tac">
+        <h4>Durée (Mois)</h4>
+        <input class="back2a2a2a bs1fff caaa bor0 br9 tac px12 py08" onkeyup="ku(this)" id="mois" value="">
+    </div>
+    <div class="tac">
+        <h4>Mensuel max (Centimes)</h4>
+        <input class="back2a2a2a bs1fff caaa bor0 br9 tac px12 py08" onkeyup="ku(this)" id="limit" value="">
+    </div>
+</div>
+
+<table id="page"></table>
+
+</main>
+
+<footer class="bort1_666 back222 px08 py08">
+todo
+</footer>
+
+</body></html>
