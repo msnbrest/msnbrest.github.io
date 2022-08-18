@@ -10,7 +10,8 @@ road to :
 
 body{font:1rem sans-serif;background:#fff;color:#444}
 
-a{text-decoration:none}
+a{text-decoration:none;color:#dc0}
+a:hover{color:#04f}
 
 img{border:0}
 
