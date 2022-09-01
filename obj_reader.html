@@ -5,9 +5,11 @@
 <script>
 let nb_emps = 0,
 
+mem_obj= {"input":"empty"};
+
 // -
 
-totab=(va)=>{
+const totab=(va)=>{
 
 	let out = "";
 	nb_emps++;
@@ -29,19 +31,54 @@ totab=(va)=>{
 
 },
 
+
+
 init= _=>{
-	console_input({input:"empty"});
+	exec();
 },
 
-console_input= obj=>{
-	if( typeof obj == "object" ){ // verif viteuf que ok c'est un obj quoi.
-		_sel("#page").innerHTML = "{"+totab(obj)+"<br>}";
+
+
+exec= _=>{
+
+	if( _sel("#input") ){
+		try{
+			mem_obj= JSON.parse( _sel("#input").value );
+		}catch(e){
+			alert("Erreur de convertion");
+			return;
+		}
+	}
+
+	if( mem_obj!=null && typeof mem_obj == "object" ){ // verif viteuf que ok c'est un obj quoi.
+		_sel("#page").innerHTML= "<span class='tag btn' onclick='show_textarea()'>Edit</span><br><br>Result :<br><br>{"+totab(mem_obj)+"<br>}";
+	}else{
+		alert("Object non reconnu");
+	}
+
+},
+
+
+
+show_textarea= _=>{
+	_sel("#page").innerHTML= "<span class='tag btn' onclick='exec()'>Go</span> | <span class='tag btn' onclick='exemple()'>Exemple</span><br><br>Input :<br><br><textarea class='back2a2a2a bs1fff caaa bor0 w100p' id='input'>"+JSON.stringify(mem_obj)+"</textarea>";
+},
+
+
+
+exemple= _=>{
+	if( _sel("#input") ){
+		_sel("#input").value= `{"input":"empty"}`;
 	}
 },
+
+
 
 ln_emsp = () => {
 	return "<br>" + ("&emsp;".repeat(nb_emps));
 };
+
+
 
 window.addEventListener("load",init,false);
 </script>
@@ -58,8 +95,6 @@ window.addEventListener("load",init,false);
 <h1 class="mxa tac mb20 my08">JSON with color</h1>
 
 <h3 class="mxa tac mb10 my08">Parfois ça me fait grave ch de lire du json, donc je me suis fait un viewer coloré</h3>
-
-<h5 class="mxa tac mb10 my08">Bon par contre, giga fleme de créer une interface, donc <span class='tag'>console_input()</span> pour insérer un objet genre <span class='tag'>{name:"value"}</span></h5>
 
 <div id="page"></div>
 
