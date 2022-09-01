@@ -1,0 +1,72 @@
+<!DOCTYPE html><html lang="fr"><head><title>JSON Viewer - msnbrest</title><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="nanocss.css">
+<script src="nanojs.js"></script>
+<script>
+let nb_emps = 0,
+
+// -
+
+totab=(va)=>{
+
+	let out = "";
+	nb_emps++;
+
+	let kz = Object.keys(va); // rox pour tableau et objets
+	let i = 1;
+	for(let k1 of kz){
+		out+=ln_emsp()+"<span style='color:#a50'>"+k1+"</span>: ";
+		if( typeof va[k1]=="object" ){
+			out+=totab(va[k1]);
+		}else{
+			out+=( typeof va[k1]=="number" ? "<span style='color:#d44'>" : typeof va[k1]=="string" ? "<span style='color:#49d'>" : "<span>" )+va[k1]+"</span>"+(i<kz.length?",":"");
+		}
+		i++;
+	}
+
+	nb_emps--;
+	return out;
+
+},
+
+init= _=>{
+	console_input({input:"empty"});
+},
+
+console_input= obj=>{
+	if( typeof obj == "object" ){ // verif viteuf que ok c'est un obj quoi.
+		_sel("#page").innerHTML = "{"+totab(obj)+"<br>}";
+	}
+},
+
+ln_emsp = () => {
+	return "<br>" + ("&emsp;".repeat(nb_emps));
+};
+
+window.addEventListener("load",init,false);
+</script>
+</head><body class="darkmode mh100vh flex flex_column flex_between">
+
+<header class="borb1_666 mb04 back222 py08">
+    <ul class="flex flex_spaced">
+        <li class="my08"><a class="tag btn big jaune" href="index.html">Accueil</a></li>
+    </ul>
+</header>
+
+<main class="back222 br12 w90p mxa mxw1200px py20 px20 my08">
+
+<h1 class="mxa tac mb20 my08">JSON with color</h1>
+
+<h3 class="mxa tac mb10 my08">Parfois ça me fait grave ch de lire du json, donc je me suis fait un viewer coloré</h3>
+
+<h5 class="mxa tac mb10 my08">Bon par contre, giga fleme de créer une interface, donc <span class='tag'>console_input()</span> pour insérer un objet genre <span class='tag'>{name:"value"}</span></h5>
+
+<div id="page"></div>
+
+</main>
+
+<footer class="bort1_666 back222 px08 py08">
+todo
+</footer>
+
+</body></html>
