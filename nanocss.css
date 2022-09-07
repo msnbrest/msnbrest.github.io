@@ -13,7 +13,7 @@ body{font:1rem sans-serif;background:#fff;color:#444}
 a{text-decoration:none;color:#dc0}
 a:hover{color:#04f}
 
-img{border:0}
+img{border:0;max-width:100%}
 
 div{position:relative}
 
@@ -54,7 +54,7 @@ table tr td:nth-child(1){padding-right:2rem}
 .w80px{width:80px}
 .w200px{width:200px}
 
-.h40px{height:40px}
+.h40{height:40px}
 
 .mxa{margin-left:auto;margin-right:auto;}
 .my08{margin-top:.8rem;margin-bottom:.8rem;}
