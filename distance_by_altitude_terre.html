@@ -1,17 +1,20 @@
 <!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Euro equivalent Google - msnbrest</title>
+<title>Distance de vue selon altitude - msnbrest</title>
 <link rel="icon" type="image/x-icon" sizes="128x128" href="favicon-128.ico">
 <link rel="stylesheet" href="nanocss.css">
 <script src="nanojs.js"></script>
 <script>
 const go= to=>{
-	const val_ok= _sels("input")[1-to].value;
-	const calc= to<1? +(val_ok)*1420000: +(val_ok)/1420000;
+	const inval= _sels("input")[1-to].value;
+	if(isNaN(inval)||to<1){return;}
+	const val_ok= +inval; // 0== altitude, 1== horizon
+	const rayon_terre= 6371000;
+	const calc= Math.tan(Math.acos( rayon_terre/(rayon_terre+val_ok) ))*rayon_terre;
 	const conved= to_h(calc);
 	_sels("input")[to].value= ~~calc;
 	//_sel("#res"+to).parentElement.classList.remove("hide");
-	_sel("#res"+to).innerHTML= conved.value + " " + conved.unit +"€";
-	_sel("#res"+(1-to)).innerHTML= val_ok;
+	_sel("#res"+to).innerHTML= conved.value + " " + conved.unit +"m";
+	_sel("#res"+(1-to)).innerHTML= inval;
 },
 
 /**
@@ -35,6 +38,7 @@ apu= (needfocus,thiss,entree)=>{
 		thiss.querySelector(".pa").classList.add("hide"):
 		thiss.querySelector(".pa").classList.remove("hide");
 };
+
 </script>
 </head><body class="darkmode mh100vh flex flex_column flex_between">
 
@@ -47,17 +51,24 @@ apu= (needfocus,thiss,entree)=>{
 <div class="hyper_center">
 <main class="back222 br12 w90p mxa mxw1200px py20 px20 my08">
 
-	<h1 class="mxa tac mb20 my08">Convertissez votre smic en equivalent Google</h1>
-	<h3 class="mxa tac mb10 my08">Suite à l'amende de 150 millions d'euros à Google (affaire de cookies),<br>
-		j'ai voulu comparer avec une amende de 135€ en equivalent google,<br>
-		ou une saisie de 100€ par rapport à un salaire au smic.</h3>
+	<h1 class="mxa tac mb20 my08">Distance d'horizon selon votre altitude</h1>
+	<h3 class="mxa tac mb10 my08">
+source: https://calculis.net/sohcahtoa#resultat<br>
+via ce site, j'ai fais un essai avec le triangle 3 4 5, voici un résumé :<br>
+<br>
+-> cos(angle) = côté adjacent / hypoténuse<br>
+donc angle1 = cos-1(4/5)<br>
+-> tan(angle1) = côté opposé / côté adjacent<br>
+donc côté opposé = tan(angle1) × côté adjacent ~= 3<br>
+</h3>
+	<div><img class="table mxa" style="height:25vh" src="svg_out1.svg"></div>
 
-	<div class="table mxa mt32">Equivalent Google:</div>
+	<div class="table mxa mt32">Votre altitude:</div>
 	<div class="flex mt08 mb04 flex_center">
 		<div class="pa w100p flex flex_center"><div id="res0" onclick="apu(true,this.parentElement.parentElement,true)" class="w200px back2a2a2a lh40 h40 tac"></div></div>
 		<input type="number" class="back2a2a2a bs1fff caaa bor0 br9 tac px12 py08" onfocus="apu(false,this.parentElement,true),go(1)" onkeyup="go(1)" onblur="apu(false,this.parentElement,false)">
 	</div>
-	<div class="table mxa mt12">Equivalent Bas Peuple:</div>
+	<div class="table mxa mt12">Distance de l'horizon:</div>
 	<div class="flex mt08 mb04 flex_center">
 		<div class="pa w100p flex flex_center"><div id="res1" onclick="apu(true,this.parentElement.parentElement,true)" class="w200px back2a2a2a lh40 h40 tac"></div></div>
 		<input type="number" class="back2a2a2a bs1fff caaa bor0 br9 tac px12 py08" onfocus="apu(false,this.parentElement,true),go(0)" onkeyup="go(0)" onblur="apu(false,this.parentElement,false)">
