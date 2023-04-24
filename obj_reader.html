@@ -5,11 +5,15 @@
 <script>
 let nb_emps = 0,
 
-mem_obj= {"input":"empty"};
+mem_obj= [];
 
 // -
 
-const totab=(va)=>{
+const h_col= ["#f0f","#f00","#f80","#dc0","#0c4","#0aa","#000"],
+
+
+
+totab=(va)=>{
 
 	let out = "";
 	nb_emps++;
@@ -61,21 +65,29 @@ exec= _=>{
 
 
 show_textarea= _=>{
-	_sel("#page").innerHTML= "<span class='tag btn' onclick='exec()'>Go</span> | <span class='tag btn' onclick='exemple()'>Exemple</span><br><br>Input :<br><br><textarea class='back2a2a2a bs1fff caaa bor0 w100p' id='input'>"+JSON.stringify(mem_obj)+"</textarea>";
+	_sel("#page").innerHTML= "<span class='tag btn' onclick='exec()'>Go</span> | <span class='tag btn' onclick='exemple()'>Exemple</span> | <span class='tag btn' onclick='exemple0()'>Vider</span><br><br>Input :<br><br><textarea class='back2a2a2a bs1fff caaa bor0 w100p' style='height:16rem' id='input'>"+JSON.stringify(mem_obj)+"</textarea>";
 },
 
 
 
 exemple= _=>{
 	if( _sel("#input") ){
-		_sel("#input").value= `{"input":"empty"}`;
+		_sel("#input").value= `{"nom":"ville","contient":[{"nom":"rue1","contient":[{"nom":"immeuble01","contient":[{"nom":"etage1"},{"nom":"etage2"},{"nom":"etage3"},{"nom":"etage4"},{"nom":"etage5"},{"nom":"etage6"},{"nom":"etage7"},{"nom":"etage8"}]},{"nom":"immeuble02","contient":[{"nom":"etage1"},{"nom":"etage2"},{"nom":"etage3"},{"nom":"etage4"}]},{"nom":"immeuble03","contient":[{"nom":"etage1"},{"nom":"etage2"},{"nom":"etage3"},{"nom":"etage4"},{"nom":"etage5"},{"nom":"etage6"},{"nom":"etage7"},{"nom":"etage8"},{"nom":"etage9"},{"nom":"etage10"},{"nom":"etage11"},{"nom":"etage12"},{"nom":"etage13"},{"nom":"etage14"},{"nom":"etage15"},{"nom":"etage16"},{"nom":"etage17"},{"nom":"etage18"}]}]},{"nom":"rue2","contient":[{"nom":"immeuble01","contient":[{"nom":"etage1"},{"nom":"etage2"},{"nom":"etage3"},{"nom":"etage4"},{"nom":"etage5"},{"nom":"etage6"},{"nom":"etage7"},{"nom":"etage8"}]},{"nom":"immeuble02","contient":[{"nom":"etage1"},{"nom":"etage2"},{"nom":"etage3"},{"nom":"etage4"},{"nom":"etage5"}]},{"nom":"immeuble03","contient":[{"nom":"etage1"},{"nom":"etage2"},{"nom":"etage3"}]},{"nom":"immeuble04","contient":[{"nom":"etage1"},{"nom":"etage2"},{"nom":"etage3"},{"nom":"etage4"}]},{"nom":"immeuble05","contient":[{"nom":"etage1"},{"nom":"etage2"},{"nom":"etage3"},{"nom":"etage4"},{"nom":"etage5"}]},{"nom":"immeuble06","contient":[{"nom":"etage1"},{"nom":"etage2"},{"nom":"etage3"},{"nom":"etage4"},{"nom":"etage5"}]}]},{"nom":"rue3","contient":[{"nom":"immeuble01","contient":[{"nom":"etage1"},{"nom":"etage2"},{"nom":"etage3"},{"nom":"etage4"},{"nom":"etage5"},{"nom":"etage6"},{"nom":"etage7"}]},{"nom":"immeuble02","contient":[{"nom":"etage1"},{"nom":"etage2"},{"nom":"etage3"}]}]},{"nom":"rue4","contient":[{"nom":"immeuble01","contient":[{"nom":"etage1"},{"nom":"etage2"},{"nom":"etage3"},{"nom":"etage4"},{"nom":"etage5"},{"nom":"etage6"},{"nom":"etage7"},{"nom":"etage8"},{"nom":"etage9"}]},{"nom":"immeuble02","contient":[{"nom":"etage1"},{"nom":"etage2"},{"nom":"etage3"},{"nom":"etage4"},{"nom":"etage5"}]}]},{"nom":"rue5","contient":[{"nom":"immeuble01","contient":[{"nom":"etage1"},{"nom":"etage2"},{"nom":"etage3"},{"nom":"etage4"}]},{"nom":"immeuble02","contient":[{"nom":"etage1"},{"nom":"etage2"},{"nom":"etage3"},{"nom":"etage4"},{"nom":"etage5"},{"nom":"etage6"}]},{"nom":"immeuble03","contient":[{"nom":"etage1"},{"nom":"etage2"},{"nom":"etage3"},{"nom":"etage4"},{"nom":"etage5"},{"nom":"etage6"},{"nom":"etage7"},{"nom":"etage8"}]},{"nom":"immeuble04","contient":[{"nom":"etage1"},{"nom":"etage2"},{"nom":"etage3"}]}]}]}`;
+	}
+},
+
+
+
+exemple0= _=>{
+	if( _sel("#input") ){
+		_sel("#input").value= `[]`;
 	}
 },
 
 
 
 ln_emsp = () => {
-	return "<br>" + ("&emsp;".repeat(nb_emps));
+	return "<br><span style='color:"+ h_col[nb_emps%7] +"'>#</span>"+ ("&emsp;".repeat(nb_emps));
 };
 
 
