@@ -12,7 +12,7 @@ draw_tile= (num,is_ton,is_gas,niv_com1)=> "<div class='tile tile_back"+ num +"'>
 
 
 
-init= _=>{   help.start(null,false);   setTimeout( init2, 2000 );   },
+init= _=>{   init_obj();   help.start(null,false);   setTimeout( init2, 2000 );   },
 
 
 
@@ -21,7 +21,18 @@ init2= osef=>{   game.me_stock= 0;   game.terrain= [...Array(game.size*game.size
 
 
 
-resize= osef=>{ fullscreen.resetsize( false ); },
+resize= osef=>{   fullscreen.resetsize( false );   },
+
+
+
+init_obj= _=>{
+
+	game= { size: 10, terrain: [], me_gas: 8, me_max_gas: 50, gas_bonus: 35, me_stock: null, me_space: 8, me_pos: 11, gas_pos: 28, sizew: 75,
+		composts: { pos:[0,null], stock:[0,12], space:12 }
+	};
+	_sel(".over").style.display= "none";
+
+},
 
 
 
@@ -30,7 +41,7 @@ redraw_all= all=>{
 	// todo: if need, ameliorer perf
 	_sel("#cssjs_tondeuse").innerHTML= "aside.ton_gas{width:"+( game.me_gas<10?game.me_gas*game.sizew/7.5:((game.me_gas-game.sizew/10)*game.sizew/37.5) )+"px;height:4px;background:#"+( game.me_gas<game.size?"f20":"2b2" )+";}"+fullscreen.css;
 	_sel("#stats").innerHTML= "Essence: "+game.me_gas+"/"+game.me_max_gas+"<br>Stock: "+game.me_stock+"/"+game.me_space+"<br>Compost1: "+game.composts.stock[0]+"/"+game.composts.space+"<br>Compost2: "+game.composts.stock[1]+"/"+game.composts.space;
-	all &&( _sel("#plateau").innerHTML= game.terrain.map( (vv,kk)=> draw_tile( vv, kk==game.me_pos, kk==game.gas_pos, (kk==game.composts.pos[0]?game.composts.stock[0]+1:0)+(kk==game.composts.pos[1]?game.composts.stock[1]+1:0) ) ).join("") );
+	all &&( _sel(".ingame").innerHTML= game.terrain.map( (vv,kk)=> draw_tile( vv, kk==game.me_pos, kk==game.gas_pos, (kk==game.composts.pos[0]?game.composts.stock[0]+1:0)+(kk==game.composts.pos[1]?game.composts.stock[1]+1:0) ) ).join("") );
 
 },
 
@@ -72,9 +83,23 @@ tap_compost= num=>{
 
 
 
+game_retry= _=>{   init_obj();   init2(null);   },
+
+
+
 ku= event=>{
 
-if( game.me_stock == null || game.me_gas<1 ){ return; }
+if( game.me_stock == null ){
+	// trois fois droite puis ptet retry
+	event.keyCode==39 ?( game.tripledroite++, game.tripledroite>2 &&( game_retry() ) ):( game.tripledroite= 0 );
+	return false;
+}else if( game.me_gas<1 ){
+	// perdu
+	_sel(".over").style.display= "block";
+	game.me_stock= null;
+	game.tripledroite= 0;
+	return false;
+}
 
 if( _moved(event) ){
 	game.me_gas--;
@@ -118,7 +143,7 @@ resetsize: sw=>{
     let o_masta= kdo.clientHeight < kdo.clientWidth ? kdo.clientHeight: kdo.clientWidth;
     game.sizew= ((o_masta-(fullscreen.is?0:180))/game.size);
     
-    fullscreen.css= "#plateau{width:"+ game.size*game.sizew +"px}.tile,aside{width:"
+    fullscreen.css= ".plateau_w{width:"+ game.size*game.sizew +"px}.tile,aside{width:"
         + game.sizew +"px;height:"+ game.sizew +"px;}aside.ton_gas{top:"
         + game.sizew*0.95 +"px;}"
         + (fullscreen.is?fullscreen.css_hidden:"");
@@ -186,10 +211,7 @@ txts:[
 
 
 
-let game={
-	size: 10, terrain: [], me_gas: 8, me_max_gas: 50, gas_bonus: 30, me_stock: null, me_space: 8, me_pos: 11, gas_pos: 28, sizew: 75,
-		composts:{ pos:[0,null], stock:[0,12], space:12 }
-};
+let game= {};
 // regle osef: pas de tile avec tondeuse et avec essence vu que essence disparait
 
 

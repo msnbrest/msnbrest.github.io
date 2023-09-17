@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="fr"><head><title>Gason en folie - msnbrest</title><meta charset="UTF-8">
+<!DOCTYPE html><html lang="fr"><head><title>Gazon en folie - msnbrest</title><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="nanocss.css">
 <link rel="stylesheet" href="jeu_tondeuse_css.css">
@@ -19,7 +19,10 @@
 
 <div><div id="help" onclick="help.start(null,true);"></div></div>
 
-<div id="plateau"></div>
+<div class="plateau plateau_w ma">
+<div class="over plateau_w ma tac"><span onclick="game_retry();" class='tag btn big jaune'>Rejouer</span><br><br><span class='c888'>Appuyez 3 fois sur droite pour rejouer</span></div>
+<div class="ingame"></div>
+</div>
 
 </main>
 
