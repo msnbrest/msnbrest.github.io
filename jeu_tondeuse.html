@@ -1,162 +1,30 @@
-<!DOCTYPE html><html lang="fr"><head><title>compar_free</title><meta charset="UTF-8">
+<!DOCTYPE html><html lang="fr"><head><title>Jeu Tondeuse - msnbrest</title><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-body{background:#181818;color:#aaa;font:13pt sans-serif;margin:0;}
-div{position:relative;}
+<link rel="stylesheet" href="nanocss.css">
+<link rel="stylesheet" href="jeu_tondeuse_css.css">
+<style id="cssjs_tondeuse"></style>
+<script src="nanojs.js"></script>
+<script src="jeu_tondeuse_js.js"></script>
+</head><body class="darkmode mh100vh flex flex_column flex_between">
 
-.tile,aside{width:80px;height:80px;}
-.tile_back0{background:#888;}
-.tile_back1{background:#080;}
-aside{position:absolute;left:0px;top:0px;z-index:2}
-aside.ton{background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512"><path style="fill:%23090" d="M400,305l-198-59l15-51c3-12,12-23,24-29 c11-6,25-7,38-3l102,30c26,7,41,35,33,62L400,305z"/><path style="fill:%23aaa" d="M128,222c-6,0-12-3-14-9L50,89H16 C7,89,0,81,0,72s7-16,16-16h44c6,0,12,3,14,9l66,133 c4,8,0,18-7,22C133,222,130,222,128,222z"/><path style="fill:%23f52" d="M428,422H185c-5,0-11-3-14-8c-2-5-3-11,0-16 c4-7,6-16,6-24c0-27-22-50-50-50c-9,0-16-7-16-16V205 c0-5,2-10,6-13c4-3,9-4,14-2l333,100c7,2,11,8,11,15 v66c0,9-7,16-16,16c-9,0-16,7-16,16C445,415,437,422,428,422z"/><path style="fill:%23e40" d="M467,290l-171-51v182h133c9,0,16-7,16-16 c0-9,7-16,16-16c9,0,16-7,16-16v-66C478,298,473,292,466,290z"/><path style="fill:%23ddf" d="M339,356h-89c-9,0-16-7-16-16c0-9,7-16,16-16 h89c9,0,16,7,16,16C356,348,348,356,339,356z"/><path style="fill:%23543" d="M461,456c-27,0-50-22-50-50c0-27,22-50,50-50 S512,378,512,406C512,433,489,456,461,456z"/><circle style="fill:%23fff" cx="461" cy="406" r="16"/><path style="fill:%23ddf" d="M478,406c0-9-7-16-16-16v32 C471,422,478,415,478,406z"/><path style="fill:%23543" d="M128,456c-46,0-83-37-83-83S81,289,128,289 s83,37,83,83S174,456,128,456z"/><circle style="fill:%23fff" cx="128" cy="372" r="50"/><path style="fill:%23ddf" d="M178,372c0-27-22-50-50-50v100 C155,422,178,400,178,372z"/></svg>');}
-aside.ton_gas{top:80px;}
-aside.gas{background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512"><path fill="%23910" d="M315.3,86.9h-58.6a8,8,0,0,0-6.3,3.1l-24.6,31.8a8,8,0,0,0,6.3,12.9h83.2a8,8,0,0,0,8-8V94.9A8,8,0,0,0,315.3,86.9Zm-8,31.8H248.4l12.2-15.8h46.6Zm83.2-15.4H343.7V74.5a8,8,0,0,0-8-8H246.7a8,8,0,0,0-6.3,3.1l-55.1,71.2-17.9,9-2.9-5.8,4.2-2.1a8,8,0,0,0,3.5-10.7l-11-22a8,8,0,0,0-10.7-3.5l-49.6,24.8a8,8,0,0,0-3.5,10.7l11,21.9a8,8,0,0,0,7.1,4.4,7.9,7.9,0,0,0,3.5-.8l4.2-2.1,2.9,5.7-11.9,5.9-.0 0.0-.4 0.2-.2 0.1-.3 0.2a3.8,3.8,0,0,0-.3 0.2l-.2 0.2c-.1 0.1-.2 0.2-.3 0.3l-.1 0.2c-.1 0.1-.2 0.2-.3 0.3l-.1 0.2-.2 0.3-.2 0.3c-.0 0.1-.1 0.2-.2 0.3s-.1 0.2-.2 0.4-.0 0.1-.1 0.2-.1 0.3-.1 0.4-.0 0.1-.1 0.2l-.1 0.4a2.8,2.8,0,0,0-.0 0.3c0,.1,0,.2-.0 0.3a2.9,2.9,0,0,0-.0 0.4,3.1,3.1,0,0,0,0,.3l0,.4v237a25.0,25.0,0,0,0,25,25H390.5a25.0,25.0,0,0,0,25-25V128.3A25.0,25.0,0,0,0,390.5,103.3ZM115.1,141.2l35.3-17.6,3.8,7.6-4.2,2.1h0l-26.9,13.4h0l-4.2,2.1Zm34.9,10L153,157l-12.6,6.3-2.8-5.7ZM250.6,82.5h77.1v56.6H206.7Zm149,338a9,9,0,0,1-9,9H134.7a9,9,0,0,1-9-9v-232l66.5-33.2H335.7a8,8,0,0,0,8-8V119.3h46.7a9,9,0,0,1,9,9ZM359.7,377.6a8,8,0,0,1-11.3,11.3l-85.1-85.2-85.2,85.2a8,8,0,0,1-11.3-11.3L252,292.4l-85.1-85.1a8,8,0,0,1,11.3-11.3l85.2,85.2,85.1-85.2a8,8,0,1,1,11.3,11.3L274.5,292.4Z"/></svg>');}
-aside.compost{background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 290 290"><path fill="%2306A3B6" d="M30,165h66v50l-12,16l-36,8l-16-20z"/><path fill="%23C7A488" d="M156,204l92,64h-200v-16z"/><path fill="%23000" d="M286,262c5,0,9,4,9,9c0,5-4,9-9,9H9c-5,0-9-4-9-9c0-5,4-9,9-9H32c1-4,2-9,5-13c-10-10-22-24-22-40v-50c0-5,4-9,9-9h29V25c0-5,4-9,9-9c5,0,9,4,9,9V149h29c5,0,9,4,9,9v47c4-1,10-2,15-2c6-7,16-11,26-11c15,0,29,10,33,24c7,1,13,5,16,11c0-0,0-0,0-0c22,0,41,15,46,35H287z M48,262h178c-4-9-14-17-26-17c-1,0-3,0-5,0c-5,0-9-2-10-7c-0-2-3-4-6-4c-0,0-0,0-1,0c-2,0-5-0-7-2c-2-1-3-4-3-7c0-0,0-0,0-0c-0-7-7-14-15-14c-5,0-11,2-13,7c-1,3-5,4-8,4c-0-0-1-0-2-0c-12,0-24,8-27,19c-0,2-2,4-4,5c-2,1-5,1-7,0c-3-1-6-1-10-1C66,246,55,253,51,263z M93,208v-40H73v30c0,5-4,9-9,9c-5,0-9-4-9-9v-30H34v40c0,9,7,19,16,27c7-5,17-8,27-8c2,0,4,0,6,0C89,221,93,215,93,208z"/></svg>');}
-#plateau{display:flex;flex-wrap:wrap;margin:0 auto;}
-#help{position:absolute;left:1rem;top:1rem;cursor:pointer;background:#6662;padding:.4rem .8rem;border-radius:3px;}
-</style>
-<style id="tondeuse"></style>
-<script>const _sel= vv=>document.querySelector(vv),
+<header class="borb1_666 mb04 back222 py08">
+    <ul class="flex flex_spaced">
+        <li class="my08"><a class="tag btn big jaune" href="index.html">Accueil</a></li>
+    </ul>
+</header>
 
+<main class="back222 br12 w90p mxa mxw1200px py20 px20 my08">
 
+<div><div id="zone_fullscreen"><span onclick="fullscreen.resetsize(true);" class='tag btn jaune'>mode Plein écran</span></div></div>
 
-draw_tile= (num,is_ton,is_gas,is_com)=> "<div class='tile tile_back"+ num +"'>"+( is_gas?"<aside class='gas'></aside>":"" )+( is_com?"<aside class='compost'></aside>":"" )+( is_ton?"<aside class='ton'></aside><aside class='ton_gas'></aside>":"" )+"</div>",
-// regle: toujours 'gas' en dernier
-
-
-
-init= _=>{   help.start(null,false);   game.terrain= [...Array(game.size*game.size)].map( vv=> 1 );   _sel("#plateau").style.width= (game.size*80)+"px";   ku({keyCode:39});   },
-
-
-
-redraw_all= _=>{
-
-	// todo
-	_sel("#tondeuse").innerHTML= "aside.ton_gas{width:"+( game.me_gas<10?game.me_gas*10:((game.me_gas-8)*2) )+"px;height:4px;background:#"+( game.me_gas<game.size?"f20":"2b2" )+";}";
-	_sel("#plateau").innerHTML= game.terrain.map( (vv,kk)=> draw_tile( vv, kk==game.me_pos, kk==game.gas_pos, kk==game.compost_pos ) ).join("");
-
-},
-
-
-
-loin_du_joueur= _=>{
-
-	let choix= [];
-	let mult= [-6,-5,-4,-3,3,4,5,6];
-	let px= 0;
-	let py= 0;
-	for( let curxy=0, lig= mult.length, len=lig*lig; curxy<len; curxy++ ){
-		px= mult[curxy%lig];
-		py= mult[curxy/lig|0];
-		if( game.me_pos+py*game.size>-1 && game.me_pos+py*game.size<game.size*game.size && game.me_pos%game.size+px>-1 && game.me_pos%game.size+px<game.size ){
-			choix.push( game.me_pos+px+py*game.size );
-		}
-	}
-
-	if( choix.length<1 ){
-		return 0;
-	}
-	return choix[Math.random()*choix.length|0];
-
-},
-
-
-
-ku= event=>{
-
-if( game.me_gas<1 ){ return; }
-
-if( _moved(event) ){
-	game.me_gas--;
-	// detruire terrain ou conso exageree
-	if( game.terrain[game.me_pos] == 1 ){   ptet_couper();   }else{   game.me_gas--;   }
-	// recharger
-	if( game.me_pos == game.gas_pos ){   game.gas_pos= loin_du_joueur();   game.me_gas= Math.min( game.me_max_gas, game.me_gas+20 );   }
-	// vider stock
-	if( game.me_pos == 0 ){ game.me_stock= 0; }
-	redraw_all();
-}
-
-},
-
-
-
-ptet_couper= _=>{   if( game.me_stock<game.me_space ){   game.terrain[game.me_pos]= 0;   game.me_stock++;   }   },
-
-
-
-_moved= event=>{
-
-	if( event.keyCode==38 && game.me_pos>game.size-1 ){ game.me_pos-= game.size; return true;; } // haut
-	if( event.keyCode==40 && game.me_pos<game.size*(game.size-1) ){ game.me_pos+= game.size; return true;; } // bas
-	if( event.keyCode==37 && game.me_pos%game.size>0 ){ game.me_pos-= 1; return true;; } // gauche
-	if( event.keyCode==39 && game.me_pos%game.size<(game.size-1) ){ game.me_pos+= 1; return true;; } // droite
-	return false;
-
-},
-
-
-
-help={
-
-cur: -1,
-
-is_on: 0,
-
-start: (osef,human)=>{   help.cur= human? 1: -1;   help.is_on ||( help.tick(null) );   },
-
-tick: osef=>{
-
-	if( help.cur<help.txts.length-1 ){
-		help.is_on= 1;
-		help.cur++;
-		_sel("#help").innerHTML= help.txts[help.cur].txt;
-		setTimeout( help.tick, help.txts[help.cur].time );
-	}else{
-		help.is_on= 0;
-	}
-
-},
-
-txts:[
-	{txt:"",time:500},
-	{txt:"Bienvenue !",time:1000},
-	{txt:"",time:500},
-	{txt:"Pret à tondre ?",time:1500},
-	{txt:"",time:250},
-	{txt:"Le but est de tondre entierement la pelouse",time:2500},
-	{txt:"",time:250},
-	{txt:"Déplacements avec les fleches directionelles",time:3000},
-	{txt:"",time:250},
-	{txt:"Attention au niveau de carburant",time:2500},
-	{txt:"",time:250},
-	{txt:"Les bidons remontent le niveau du réservoir",time:3000},
-	{txt:"",time:250},
-	{txt:"Le bac de ramassage est à vider dans le compost",time:3500},
-	{txt:"[aide]",time:50},
-]
-
-};
-
-// todo idee : decharger pelouse toutes les 8 cases sinon ça coupe l'herbe où on passe + ça recréé de l'herbe "ailleurs" déjà coupé + ça consomme 2x
-// collecter plus de 20 bidons sans terminer l'herbe
-// collecter 10 bidons apres avoir coupé l'herbe plateau vidé
-// toucher les 4 coins de l'écran apres avoir coupé l'herbe
-
-
-
-let game={   size: 10, terrain: [], me_gas: 8, me_max_gas: 50, me_stock: 0, me_space: 8, me_pos: 11, gas_pos: 28, compost_pos: 0,   };
-// regle osef: pas de tile avec tondeuse et avec essence vu que essence disparait
-
-
-
-window.addEventListener("load",init,false);
-window.addEventListener("keyup",ku,false);
-</script>
-</head><body>
-
-<div id="help" onclick="help.start(null,true);"></div>
+<div><div id="help" onclick="help.start(null,true);"></div></div>
 
 <div id="plateau"></div>
+
+</main>
+
+<footer class="bort1_666 back222 px08 py08">
+todo
+</footer>
 
 </body></html>
