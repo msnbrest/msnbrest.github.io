@@ -1,4 +1,8 @@
-const init= _=>{
+const version= "0.230919-23",
+
+
+
+init= _=>{
 
 game= {
 	system: {}, g_tile: {}, all: {
@@ -18,6 +22,13 @@ game= {
 game.system.over= type=>{
 
 	if( type==null ){   _sel(".over").style.display= "none";   return;   } // null==cacher
+	if( type=="loose" ){
+		game.all.me_gas= 8;
+		game.all.gas_pos= 28;
+	}else{
+		game.all.me_gas= game.all.me_max_gas;
+		game.eloigner();
+	}
 	_sel(".over").style.display= "block";
 	_sel(".over").innerHTML= tab_html_over[ type ]();
 
@@ -25,7 +36,6 @@ game.system.over= type=>{
 
 game.system.retry= osef=>{
 
-	game.all.me_gas= 8;
 	game.all.me_pos= 11;
 	game.all.me_stock= 0;
 	game.all.gas_bonus= 35;
@@ -80,8 +90,8 @@ game.eloigner= _=>{
 		}
 	}
 
-	if( choix.length<1 ){ return 0; }
-	return choix[Math.random()*choix.length|0];
+	if( choix.length<1 ){ game.all.gas_pos= 0; eturn; }
+	game.all.gas_pos= choix[Math.random()*choix.length|0];
 
 };
 
@@ -126,10 +136,11 @@ tab_html_over= {
 
 redraw= all=>{
 
+console.info(game.all.me_gas);
 	// todo: if need, ameliorer perf
 	_sel("#cssjs_tondeuse").innerHTML= "aside.ton_gas{width:"+( game.all.me_gas<10?game.all.me_gas*game.all.sizew/7.5:((game.all.me_gas-game.all.sizew/10)*game.all.sizew/37.5) )+"px;height:4px;background:#"+( game.all.me_gas<game.all.sizeN?"f20":"2b2" )+";}"+fullscreen.css;
 
-	_sel("#stats").innerHTML= "Essence: "+game.all.me_gas+"/"+game.all.me_max_gas+"<br>Stock: "+game.all.me_stock+"/"+game.all.me_space+"<br>Compost1: "+game.all.composts.stock[0]+"/"+game.all.composts.space+"<br>Compost2: "+game.all.composts.stock[1]+"/"+game.all.composts.space;
+	_sel("#stats").innerHTML= "Essence: "+game.all.me_gas+"/"+game.all.me_max_gas+"<br>Stock: "+game.all.me_stock+"/"+game.all.me_space+"<br>Compost1: "+game.all.composts.stock[0]+"/"+game.all.composts.space+"<br>Compost2: "+game.all.composts.stock[1]+"/"+game.all.composts.space+"<br><span class='c666'>-v: "+version+"</span>";
 
 	all &&( _sel(".ingame").innerHTML= game.all.tiles.map( (vv,kk)=> game.g_tile.draw( vv, kk==game.all.me_pos, kk==game.all.gas_pos, (kk==game.all.composts.pos[0]?game.all.composts.stock[0]+1:0)+(kk==game.all.composts.pos[1]?game.all.composts.stock[1]+1:0) ) ).join("") );
 
@@ -151,7 +162,7 @@ if( game.moved(event) ){
 	if( game.all.tiles[game.all.me_pos] == 1 ){   game.g_tile.couper();   }else{   game.all.me_gas--;   }
 
 	// recharger
-	if( game.all.me_pos == game.all.gas_pos ){   game.all.gas_pos= game.eloigner();   game.all.me_gas= Math.min( game.all.me_max_gas, game.all.me_gas+game.all.gas_bonus );   game.all.gas_bonus>20 &&( game.all.gas_bonus-=2 );   }
+	if( game.all.me_pos == game.all.gas_pos ){   game.eloigner();   game.all.me_gas= Math.min( game.all.me_max_gas, game.all.me_gas+game.all.gas_bonus );   game.all.gas_bonus>20 &&( game.all.gas_bonus-=2 );   }
 
 	// ptet perdu
 	if( game.all.me_gas<1 ){
