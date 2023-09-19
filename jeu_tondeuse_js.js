@@ -150,16 +150,18 @@ if( game.moved(event) ){
 	// detruire terrain ou conso exageree
 	if( game.all.tiles[game.all.me_pos] == 1 ){   game.g_tile.couper();   }else{   game.all.me_gas--;   }
 
+	// recharger
+	if( game.all.me_pos == game.all.gas_pos ){   game.all.gas_pos= game.eloigner();   game.all.me_gas= Math.min( game.all.me_max_gas, game.all.me_gas+game.all.gas_bonus );   game.all.gas_bonus>20 &&( game.all.gas_bonus-=2 );   }
+
+	// ptet perdu
 	if( game.all.me_gas<1 ){
-		// perdu
 		game.all.me_stock= null;
 		game.tripledroite= 0;
 		redraw(1);
 		setTimeout( "game.system.over('loose');", 750 );
 		return false;
 	}
-	// recharger
-	if( game.all.me_pos == game.all.gas_pos ){   game.all.gas_pos= game.eloigner();   game.all.me_gas= Math.min( game.all.me_max_gas, game.all.me_gas+game.all.gas_bonus );   game.all.gas_bonus>20 &&( game.all.gas_bonus-=2 );   }
+
 	// vider stock
 	if( game.all.me_pos == game.all.composts.pos[0] ){ game.compostTouch(0); }
 	if( game.all.me_pos == game.all.composts.pos[1] ){ game.compostTouch(1); }
