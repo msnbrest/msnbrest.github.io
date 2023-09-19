@@ -34,8 +34,7 @@ game.system.retry= osef=>{
 	game.all.composts.stock[0]= 0;
 	game.all.composts.stock[1]= 12;
 
-	game.all.tiles= [...Array(game.all.sizeN*game.all.sizeN)].map( vv=> 0 );
-	game.all.tiles[14]= 1;
+	game.all.tiles= [...Array(game.all.sizeN*game.all.sizeN)].map( vv=> 1 );
 
 	game.system.over(null);
 	ku({keyCode:39});
