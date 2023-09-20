@@ -8,7 +8,7 @@ game= {
 	system: {}, g_tile: {}, all: {
 		sizeN: 10, tiles: [], sizew: 75,
 		me_gas: 8, me_max_gas: 50, gas_bonus: 35, gas_pos: 28,
-		me_stock: null, me_space: 8, me_pos: 11,
+		me_stock: null, me_space: 8, me_pos: 11, me_over_dist: 0,
 		composts: {
 			pos: [null,null],
 			stock: [0,12],
@@ -53,7 +53,9 @@ game.system.retry= osef=>{
 
 game.g_tile.couper= _=>{
 
-	if( game.all.me_stock<game.all.me_space ){
+	// regle: peut dépasser de 1 mais faut pas rouler trop longtemps :p
+	if( game.all.me_stock<=game.all.me_space ){
+		game.all.me_over_dist= 0;
 		game.all.tiles[game.all.me_pos]= 0;
 		game.all.me_stock++;
 
@@ -69,9 +71,9 @@ game.g_tile.couper= _=>{
 };
 
 game.g_tile.draw= (num,is_ton,is_gas,niv_com1)=> "<div class='tile tile_back"+ num +"'>"
-+( is_gas?"<aside class='gas'></aside>":"" )
-+( niv_com1<1?"":"<aside class='compost_"+( niv_com1-1<game.all.composts.space?"min":"max" )+"'></aside>" )
-+( is_ton?"<aside class='ton'></aside><aside class='ton_gas'></aside>":"" )
++( is_gas?"<aside class='gas'>+ "+game.all.gas_bonus+"</aside>":"" )
++( niv_com1<1?"":"<aside class='compost_"+( niv_com1-1<game.all.composts.space?"min":"max" )+"'>"+(niv_com1-1)+"/"+game.all.composts.space+"</aside>" )
++( is_ton?"<aside class='ton'>"+(game.all.me_stock||0)+"/"+game.all.me_space+"</aside><aside class='ton_gas'></aside>":"" )
 +"</div>";
 // regle: toujours 'gas' en dernier
 // scotch: niv_com1... (pas de -1 ou null, minimum est 0 donc niveau minimum "+1" ...)
@@ -139,7 +141,7 @@ redraw= all=>{
 	// todo: if need, ameliorer perf
 	_sel("#cssjs_tondeuse").innerHTML= "aside.ton_gas{width:"+( game.all.me_gas<10?game.all.me_gas*game.all.sizew/7.5:((game.all.me_gas-game.all.sizew/10)*game.all.sizew/37.5) )+"px;height:4px;background:#"+( game.all.me_gas<game.all.sizeN?"f20":"2b2" )+";}"+fullscreen.css;
 
-	_sel("#stats").innerHTML= "Essence: "+game.all.me_gas+"/"+game.all.me_max_gas+"<br>Stock: "+game.all.me_stock+"/"+game.all.me_space+"<br>Compost1: "+game.all.composts.stock[0]+"/"+game.all.composts.space+"<br>Compost2: "+game.all.composts.stock[1]+"/"+game.all.composts.space+"<br><span class='c666'>-v: "+version+"</span>";
+	_sel("#stats").innerHTML= "Essence: "+game.all.me_gas+"/"+game.all.me_max_gas+"<br>Stock: "+(game.all.me_stock||0)+"/"+game.all.me_space+"<br>Compost1: "+game.all.composts.stock[0]+"/"+game.all.composts.space+"<br>Compost2: "+game.all.composts.stock[1]+"/"+game.all.composts.space+"<br><span class='c666'>-v: "+version+"</span>";
 
 	all &&( _sel(".ingame").innerHTML= game.all.tiles.map( (vv,kk)=> game.g_tile.draw( vv, kk==game.all.me_pos, kk==game.all.gas_pos, (kk==game.all.composts.pos[0]?game.all.composts.stock[0]+1:0)+(kk==game.all.composts.pos[1]?game.all.composts.stock[1]+1:0) ) ).join("") );
 
@@ -158,10 +160,20 @@ if( game.all.me_stock == null ){
 if( game.moved(event) ){
 	game.all.me_gas--;
 	// detruire terrain ou conso exageree
-	if( game.all.tiles[game.all.me_pos] == 1 ){   game.g_tile.couper();   }else{   game.all.me_gas--;   }
+	if( game.all.tiles[game.all.me_pos] == 1 ){
+		game.g_tile.couper();
+	}else{
+		game.all.me_gas--;
+		if(game.all.me_gas<0){ game.all.me_gas=0; }
+		game.all.me_over_dist++;
+		if( game.all.me_over_dist>3 && game.all.tiles[game.all.me_pos]==0 && game.all.me_stock>game.all.me_space ){
+			game.all.me_stock--;
+			game.all.tiles[game.all.me_pos]= 1;
+		}
+	}
 
 	// recharger
-	if( game.all.me_pos == game.all.gas_pos ){   game.eloigner();   game.all.me_gas= Math.min( game.all.me_max_gas, game.all.me_gas+game.all.gas_bonus );   game.all.gas_bonus>20 &&( game.all.gas_bonus-=2 );   }
+	if( game.all.me_pos == game.all.gas_pos ){   game.eloigner();   game.all.me_gas= Math.min( game.all.me_max_gas, game.all.me_gas+game.all.gas_bonus );   game.all.gas_bonus>20 &&( game.all.gas_bonus-=5 );   }
 
 	// ptet perdu
 	if( game.all.me_gas<1 ){
@@ -197,12 +209,11 @@ resetSize: sw=>{
     const kdo= document.documentElement;
     let o_masta= kdo.clientHeight < kdo.clientWidth ? kdo.clientHeight: kdo.clientWidth;
     game.all.sizew= (o_masta-(fullscreen.is?0:180))/game.all.sizeN;
-	game.all.sizewp2= game.all.sizew*.1|0;
 
     fullscreen.css= ".plateau_w{width:"+ game.all.sizeN*game.all.sizew +"px}.tile,aside{width:"
         + game.all.sizew +"px;height:"+ game.all.sizew +"px;}.tile4x4{width:"
         + (game.all.sizew*4) +"px;height:"+ (game.all.sizew*4) +"px;}aside.ton_gas{top:"
-        + game.all.sizew*0.95 +"px;}@keyframes vieV{0%{  transform:matrix(1, 0, .25, 1, -"+game.all.sizewp2+", 0); }50%{ transform:matrix(1, 0, -.25, 1, "+game.all.sizewp2+", 0); }100%{transform:matrix(1, 0, .25, 1, -"+game.all.sizewp2+", 0); }}"
+        + game.all.sizew*0.95 +"px;}aside.compost_min,aside.compost_max,aside.gas,aside.ton{padding-top:"+game.all.sizew*.4+"px;text-align:center;text-shadow:1px 1px 2px #000,0 0 3px #000;font-size:1.1em;}aside.ton{padding-top:"+game.all.sizew*.5+"px;}aside.compost_min{padding-left:"+game.all.sizew*.02+"rem;padding-top:"+game.all.sizew*.2+"px;}aside.compost_max{padding-left:"+game.all.sizew*.01+"rem;padding-top:"+game.all.sizew*.6+"px;}"
         + (fullscreen.is?fullscreen.css_hidden:"");
 
     redraw(0);
@@ -251,7 +262,11 @@ txts:[
 	{txt:"|",time:200},
 	{txt:"Le bac de ramassage est à vider dans le compost,",time:3500},
 	{txt:"|",time:200},
+	{txt:"S'il déborde longtemps alors de l'herbe se replantera,",time:4000},
+	{txt:"|",time:200},
 	{txt:"il faut remplir un compost pour débloquer l'autre.",time:3500},
+	{txt:"|",time:200},
+	{txt:"Faites attention, mamie veille au grain.",time:3000},
 	{txt:"[aide]",time:50},
 ]
 
@@ -264,13 +279,11 @@ txts:[
 // Trophee, collecter 50 bidons apres avoir coupé l'herbe plateau vidé
 // Trophee, toucher les 4 coins de l'écran apres avoir coupé l'herbe
 // Trophee, chopper essence sur la case compost + non tondue xD
-// recréer de l'herbe random lorsque full
+
 // trois coeurs.   dechets, panne = -1, attente x temps = recup +1, pierre = -3, fleur = -1.
 // Augmenter taille lorsque gagné, donc + bidons mais memes compost
 // Power up : prout qui propulse de 3 cases, conso essence ( à sec ? marche quand meme )
 // perdu = mini jeu pour la réparer soit même (selon essence ou lame hs)
-
-
 
 let game= {};
 // regle osef: pas de tile avec tondeuse et avec essence vu que essence disparait

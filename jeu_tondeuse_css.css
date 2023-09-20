@@ -28,11 +28,9 @@ main.py20{padding-top:1rem;padding-bottom:1rem;}
 
 aside.ton{animation:vie .7s .2s linear infinite;}
 @keyframes vie{
-0%{  transform:scale( 1.1, 1.0) translate(0,  0px); }
-25%{ transform:scale( 1.0, 1.2) translate(0, -4px); }
-50%{ transform:scale( 1.1, 1.4) translate(0, -8px); }
-75%{ transform:scale( 1.2, 1.2) translate(0, -4px); }
-100%{transform:scale( 1.1, 1.0) translate(0,  0px); }
+0%{  transform:scale( 1.05, 1.0) translate(0,  0px); }
+25%{ transform:scale( 1.00, 1.1) translate(0, -2px); }
+50%{ transform:scale( 1.05, 1.2) translate(0, -4px); }
+75%{ transform:scale( 1.10, 1.1) translate(0, -2px); }
+100%{transform:scale( 1.05, 1.0) translate(0,  0px); }
 }
-
-aside.compost_min,aside.compost_max,aside.gas{animation:vieV 1.6s ease-in-out infinite;}
