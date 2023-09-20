@@ -25,3 +25,14 @@ main.py20{padding-top:1rem;padding-bottom:1rem;}
 #zone_fullscreen{position:absolute;left:0;top:.8rem;z-index:7;}
 .ingame{display:flex;flex-wrap:wrap;}
 .over{display:none;padding-top:20%;position:absolute;left:0;top:0;width:100%;height:100%;background:#000b;z-index:4;}
+
+aside.ton{animation:vie .7s .2s linear infinite;}
+@keyframes vie{
+0%{  transform:scale( 1.1, 1.0) translate(0,  0px); }
+25%{ transform:scale( 1.0, 1.2) translate(0, -4px); }
+50%{ transform:scale( 1.1, 1.4) translate(0, -8px); }
+75%{ transform:scale( 1.2, 1.2) translate(0, -4px); }
+100%{transform:scale( 1.1, 1.0) translate(0,  0px); }
+}
+
+aside.compost_min,aside.compost_max,aside.gas{animation:vieV 1.6s ease-in-out infinite;}

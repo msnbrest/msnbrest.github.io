@@ -136,7 +136,6 @@ tab_html_over= {
 
 redraw= all=>{
 
-console.info(game.all.me_gas);
 	// todo: if need, ameliorer perf
 	_sel("#cssjs_tondeuse").innerHTML= "aside.ton_gas{width:"+( game.all.me_gas<10?game.all.me_gas*game.all.sizew/7.5:((game.all.me_gas-game.all.sizew/10)*game.all.sizew/37.5) )+"px;height:4px;background:#"+( game.all.me_gas<game.all.sizeN?"f20":"2b2" )+";}"+fullscreen.css;
 
@@ -198,11 +197,12 @@ resetSize: sw=>{
     const kdo= document.documentElement;
     let o_masta= kdo.clientHeight < kdo.clientWidth ? kdo.clientHeight: kdo.clientWidth;
     game.all.sizew= (o_masta-(fullscreen.is?0:180))/game.all.sizeN;
+	game.all.sizewp2= game.all.sizew*.1|0;
 
     fullscreen.css= ".plateau_w{width:"+ game.all.sizeN*game.all.sizew +"px}.tile,aside{width:"
         + game.all.sizew +"px;height:"+ game.all.sizew +"px;}.tile4x4{width:"
         + (game.all.sizew*4) +"px;height:"+ (game.all.sizew*4) +"px;}aside.ton_gas{top:"
-        + game.all.sizew*0.95 +"px;}"
+        + game.all.sizew*0.95 +"px;}@keyframes vieV{0%{  transform:matrix(1, 0, .25, 1, -"+game.all.sizewp2+", 0); }50%{ transform:matrix(1, 0, -.25, 1, "+game.all.sizewp2+", 0); }100%{transform:matrix(1, 0, .25, 1, -"+game.all.sizewp2+", 0); }}"
         + (fullscreen.is?fullscreen.css_hidden:"");
 
     redraw(0);
