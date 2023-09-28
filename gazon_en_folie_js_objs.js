@@ -50,7 +50,7 @@ svg_path= {
 
 "herbe_max": obj=> '<path fill="#008000" d="M0 0h1000v1000h-1000z"/><path fill="#080" d="M0 0h970v970h-970z"/>',
 
-"GM": obj=> '<path fill="#000c" d="M0,0h1000v1000h-1000z"/><path fill="#aaa" d="M309 64l22,5l18,15l8,20l1,20l20,18l13,22l6,32l-3,30l-8,18l-10,15l20,1l11,3l132,78l10,13l39,154l-1,22l-13,18l-23,8l-23,-6l-13,-17l-35,-136l-54,-32l68,402l-1,13l-11,6l-61,0l0,180l-11,27l-28,11l-25,-10l-13,-27l0,-181l-68,0l0,178l-13,30l-25,10l-27,-10l-13,-28l0,-180l-59,0l-11,-5l-3,-10l66,-406l-51,30l-22,83l11,11l15,28l3,23l-5,13l-17,5l-10,-5l-6,-13l-3,-17l-11,18l-25,10l-22,-5l-10,-8l0,449l-8,13l-20,0l-10,-11l0,-460l5,-25l11,-18l22,-15l30,-122l3,-6l5,-5l137,-81l6,-1l27,0l-13,-18l-10,-30l3,-40l17,-30l18,-17l3,-5l-1,-10l5,-18l20,-22z"/><path fill="#000c" d="M351,218l34,-51h-68l-20,-20v-127l20,-20h663l20,20v127l-20,20l-552,0z"/>',
+"GM": obj=> '<path fill="#0009" d="M0,0h1000v1000h-1000z"/><path fill="#aaa" d="M309 64l22,5l18,15l8,20l1,20l20,18l13,22l6,32l-3,30l-8,18l-10,15l20,1l11,3l132,78l10,13l39,154l-1,22l-13,18l-23,8l-23,-6l-13,-17l-35,-136l-54,-32l68,402l-1,13l-11,6l-61,0l0,180l-11,27l-28,11l-25,-10l-13,-27l0,-181l-68,0l0,178l-13,30l-25,10l-27,-10l-13,-28l0,-180l-59,0l-11,-5l-3,-10l66,-406l-51,30l-22,83l11,11l15,28l3,23l-5,13l-17,5l-10,-5l-6,-13l-3,-17l-11,18l-25,10l-22,-5l-10,-8l0,449l-8,13l-20,0l-10,-11l0,-460l5,-25l11,-18l22,-15l30,-122l3,-6l5,-5l137,-81l6,-1l27,0l-13,-18l-10,-30l3,-40l17,-30l18,-17l3,-5l-1,-10l5,-18l20,-22z"/><path fill="#000c" d="M351,218l34,-51h-68l-20,-20v-127l20,-20h663l20,20v127l-20,20l-552,0z"/>',
 
 "ton": obj=> '<path fill="#aaa" d="M10,220h100l140,294l-44,40l-132-280h-62z"/><path fill="#090" d="M370,560l30-100l400,116l-30,100z"/><path fill="#e40" d="M190,490l740,200v160h-740z"/><path fill="#f52" d="M190,490l370,100v258h-370z"/><path fill="#ccc" d="M450,868h240v12h-240z"/><path fill="#543" d="M850,760h80l36,24l24,36v80l-24,36l-36,24h-80l-36-24l-24-36v-80l24-36l36-24z"/><path fill="#ddf" d="M832,822h80l20,20v40l-20,20h-40l-20-20v-40l20-20z"/><path fill="#543" d="M160,710h80l50,30l30,50v80l-30,50l-50,30h-80l-50-30l-30-50v-80l30-50l50-30z"/><path fill="#ddf" d="M176,766h50l40,40v50l-40,40h-50l-40-40v-50l40-40z"/><text fill="#fff" x="400" y="820" font-size="240" font-family="arial,sans-serif">'+ obj.gas +'</text><text fill="#fff" x="50" y="680" font-size="240" font-family="arial,sans-serif">'+( obj.stock||0 )+'</text>',
 
@@ -69,6 +69,10 @@ svg_path= {
 
 
 // todo idee :
+// vider dans compost pour terminer la partie
+// score win ( herbe coupée +85, vidage compost +35 )
+// score loose ( essence utilisé -10, rouler sur pas herbe -1 )
+
 // Trophee, collecter 25+ bidons sans terminer l'herbe
 // Trophee, collecter 50 bidons apres avoir coupé l'herbe plateau vidé
 // Trophee, toucher les 4 coins de l'écran apres avoir coupé l'herbe
