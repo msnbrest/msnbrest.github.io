@@ -1,0 +1,18 @@
+/*
+
+aside.ton{animation:vie .7s .2s linear infinite;}
+@keyframes vie{
+0%{  transform:scale( 1.05, 1.0) translate(0,  0px); }
+25%{ transform:scale( 1.00, 1.1) translate(0, -2px); }
+50%{ transform:scale( 1.05, 1.2) translate(0, -4px); }
+75%{ transform:scale( 1.10, 1.1) translate(0, -2px); }
+100%{transform:scale( 1.05, 1.0) translate(0,  0px); }
+}
+
+*/
+header.mb04{margin-bottom:0;}
+main{display:flex;align-items:center;justify-content:center;}
+main.py20{padding-top:.6rem;padding-bottom:.6rem;}
+main.br12{border-radius:1rem;}
+svg{background:#000;height:calc(100vh - 10rem);cursor:none;}
+svg text{font:arial,sans-serif;}
