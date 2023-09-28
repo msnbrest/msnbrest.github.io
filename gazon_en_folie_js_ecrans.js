@@ -1,17 +1,3 @@
-const version= "0.230928-03",
-
-
-
-dev_prod= {
-
-is_prod: false,
-
-diapospeed: _=> dev_prod.is_prod? 1: 0.1,
-
-};
-
-
-
 let ecrans= {
 
 	"reglage":{ kd: kc=>{
