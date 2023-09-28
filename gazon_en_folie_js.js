@@ -89,7 +89,7 @@ delete_scene= _=>{
 resize= _=>{
 	src_w= window.innerWidth;
 	src_h= window.innerHeight;
-	src_m= (src_h>src_w?src_w:src_h) -(ecrans["reglage"].infos.is_fullscreen?0:164);
+	src_m= (src_h>src_w?src_w:src_h) -(ecrans["reglage"].infos.is_fullscreen?0:184);
 	_sel("#page").style.width= src_m+"px";
 	_sel("#page").style.height= src_m+"px";
 },

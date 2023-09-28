@@ -14,7 +14,7 @@ svg: obj=> '<g id="obj'+ obj.id +'" transform="translate('+ obj.x +' '+ obj.y +'
 },
 svg_g100:{
 attrs:[ {n:"pt",v:"default"} ],
-svg: obj=> '<g id="obj'+ obj.id +'" transform="translate('+ obj.x +' '+ obj.y +') scale(0.1 0.1)">'+ svg_path[obj.pt](obj) +'</g>'
+svg: obj=> '<g id="obj'+ obj.id +'" transform="translate('+ obj.x +' '+ obj.y +') scale(0.101 0.101)">'+ svg_path[obj.pt](obj) +'</g>'
 },
 
 abst_compost:{
@@ -46,9 +46,9 @@ svg_path= {
 
 "default": obj=> '<path fill="#f00" d="M0 0h100v100h-100z"/>',
 
-"herbe_min": obj=> '<path fill="#232" d="M0 0h990v990h-990z"/>',
+"herbe_min": obj=> '<path fill="#2a3b2a" d="M0 0h1000v1000h-1000z"/><path fill="#232" d="M0 0h970v970h-970z"/>',
 
-"herbe_max": obj=> '<path fill="#080" d="M0 0h990v990h-990z"/>',
+"herbe_max": obj=> '<path fill="#008000" d="M0 0h1000v1000h-1000z"/><path fill="#080" d="M0 0h970v970h-970z"/>',
 
 "GM": obj=> '<path fill="#000c" d="M0,0h1000v1000h-1000z"/><path fill="#aaa" d="M309 64l22,5l18,15l8,20l1,20l20,18l13,22l6,32l-3,30l-8,18l-10,15l20,1l11,3l132,78l10,13l39,154l-1,22l-13,18l-23,8l-23,-6l-13,-17l-35,-136l-54,-32l68,402l-1,13l-11,6l-61,0l0,180l-11,27l-28,11l-25,-10l-13,-27l0,-181l-68,0l0,178l-13,30l-25,10l-27,-10l-13,-28l0,-180l-59,0l-11,-5l-3,-10l66,-406l-51,30l-22,83l11,11l15,28l3,23l-5,13l-17,5l-10,-5l-6,-13l-3,-17l-11,18l-25,10l-22,-5l-10,-8l0,449l-8,13l-20,0l-10,-11l0,-460l5,-25l11,-18l22,-15l30,-122l3,-6l5,-5l137,-81l6,-1l27,0l-13,-18l-10,-30l3,-40l17,-30l18,-17l3,-5l-1,-10l5,-18l20,-22z"/><path fill="#000c" d="M351,218l34,-51h-68l-20,-20v-127l20,-20h663l20,20v127l-20,20l-552,0z"/>',
 

@@ -4,7 +4,7 @@ const version= "0.230928-03",
 
 dev_prod= {
 
-is_prod: true,
+is_prod: false,
 
 diapospeed: _=> dev_prod.is_prod? 1: 0.1,
 
@@ -41,9 +41,10 @@ let ecrans= {
 	}, init: _=>{
 
 		add_obj( {id:"cur",t:"path",x:50,y:98}, {fill:"#031",rd:"h900v76h-900"} );
-		add_obj( {id:"txt_touches",t:"text",x:10,y:10}, {str:"Touches : Haut, Bas, Gauche, Droite (Droite=valider)",color:"#880",fs:36} );
+		add_obj( {id:"txt_touches",t:"text",x:10,y:10}, {str:"Touches : Haut, Bas, Gauche, Droite (Droite=valider)",color:"#660",fs:36} );
+		add_obj( {id:"txt_aidef11",t:"text",x:10,y:50}, {str:"Appuyez sur F11 pour une meilleure experience de jeu",color:"#660",fs:36} );
 		add_obj( {id:"txt_jouer",t:"text",x:398,y:108}, {str:"Jouer >",color:"#999",fs:64} );
-		add_obj( {id:"txt_minijeu",t:"text",x:346,y:208}, {str:"Mini Tuto >",color:"#999",fs:64} );
+		add_obj( {id:"txt_minijeu",t:"text",x:346,y:208}, {str:"Mini Tuto >",color:"#222",fs:64} );
 		add_obj( {id:"txt_reglages",t:"text",x:120,y:358}, {str:"Reglages :",color:"#666",fs:60} );
 		add_obj( {id:"bt_see_pointer",t:"text",x:120,y:458}, {str:game.infos.str_bt_see_pointer(),color:"#999",fs:50} );
 		add_obj( {id:"bt_right_clic",t:"text",x:120,y:558}, {str:game.infos.str_bt_right_clic(),color:"#999",fs:50} );
@@ -63,8 +64,14 @@ let ecrans= {
 		sw_see_pointer: _=>{ game.infos.has_see_pointer= 1-game.infos.has_see_pointer; _sel("svg").style.cursor= game.infos.has_see_pointer?"default":"none"; },
 		sw_right_click: _=>{game.infos.has_right_click= 1-game.infos.has_right_click;},
 		menus: [
-			{ y:98, k13:_=>{ bascule= "jouable"; } }, // JOUER
-			{ y:198, k13:_=>{ bascule= "le_tuto"; } }, // tuto
+			{ y:98,
+				k39:_=>{ bascule= "jouable"; },
+				k13:_=>{ bascule= "jouable"; }
+			}, // JOUER
+			{ y:198,
+				k39:_=>{ bascule= "le_tuto"; },
+				k13:_=>{ bascule= "jouable"; }
+			}, // tuto
 			{ y:440,
 				k37:_=>{game.infos.sw_see_pointer();edit_str_obj("bt_see_pointer",game.infos.str_bt_see_pointer());},
 				k39:_=>{game.infos.sw_see_pointer();edit_str_obj("bt_see_pointer",game.infos.str_bt_see_pointer());},
