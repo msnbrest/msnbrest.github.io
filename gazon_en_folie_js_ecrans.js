@@ -1,12 +1,12 @@
-const version= "0.230924-03",
+const version= "0.230928-03",
 
 
 
 dev_prod= {
 
-is_prod: false,
+is_prod: true,
 
-diapospeed: _=> dev_prod.is_prod? 1: 0.2,
+diapospeed: _=> dev_prod.is_prod? 1: 0.1,
 
 };
 
