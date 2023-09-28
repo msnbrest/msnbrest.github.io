@@ -27,15 +27,14 @@ let ecrans= {
 	}, init: _=>{
 
 		add_obj( {id:"cur",t:"path",x:50,y:98}, {fill:"#031",rd:"h900v76h-900"} );
-		add_obj( {id:"txt_touches",t:"text",x:10,y:10}, {str:"Touches : Haut, Bas, Gauche, Droite (Droite=valider)",color:"#660",fs:36} );
-		add_obj( {id:"txt_aidef11",t:"text",x:10,y:50}, {str:"Appuyez sur F11 pour une meilleure experience de jeu",color:"#660",fs:36} );
-		add_obj( {id:"txt_jouer",t:"text",x:398,y:108}, {str:"Jouer >",color:"#999",fs:64} );
-		add_obj( {id:"txt_minijeu",t:"text",x:346,y:208}, {str:"Mini Tuto >",color:"#222",fs:64} );
+		add_obj( {id:"txt_minituto",t:"text",x:346,y:108}, {str:"Mini Tuto >",color:"#369",fs:64} );
+		add_obj( {id:"txt_jouer",t:"text",x:398,y:208}, {str:"Jouer >",color:"#494",fs:64} );
 		add_obj( {id:"txt_reglages",t:"text",x:120,y:358}, {str:"Reglages :",color:"#666",fs:60} );
 		add_obj( {id:"bt_see_pointer",t:"text",x:120,y:458}, {str:game.infos.str_bt_see_pointer(),color:"#999",fs:50} );
 		add_obj( {id:"bt_right_clic",t:"text",x:120,y:558}, {str:game.infos.str_bt_right_clic(),color:"#999",fs:50} );
 		add_obj( {id:"bt_fullscreen",t:"text",x:120,y:658}, {str:game.infos.str_bt_fullscreen(),color:"#999",fs:50} );
 		add_obj( {id:"txt_version",t:"text",x:670,y:950}, {str:"Version: "+version,color:"#222",fs:32} );
+		edit_move_obj( "cur", null, game.infos.menus[game.infos.cury].y );
 
 	}, tick: _=>{}, infos: {
 
@@ -51,11 +50,11 @@ let ecrans= {
 		sw_right_click: _=>{game.infos.has_right_click= 1-game.infos.has_right_click;},
 		menus: [
 			{ y:98,
-				k39:_=>{ bascule= "jouable"; },
-				k13:_=>{ bascule= "jouable"; }
+				k39:_=>{ bascule= "le_tuto"; },
+				k13:_=>{ bascule= "le_tuto"; }
 			}, // JOUER
 			{ y:198,
-				k39:_=>{ bascule= "le_tuto"; },
+				k39:_=>{ bascule= "jouable"; },
 				k13:_=>{ bascule= "jouable"; }
 			}, // tuto
 			{ y:440,
@@ -285,32 +284,38 @@ let ecrans= {
 
 
 
-	"le_tuto":{ kd: kc=>{}, init: _=>{}, tick: _=>{}, infos:{
-		help_list:[
-			{txt:"Bienvenue !",time:1000},
-			{txt:"|",time:200},
-			{txt:"Pret à tondre ?",time:1500},
-			{txt:"|",time:200},
-			{txt:"Le but est de tondre entierement la pelouse.",time:2500},
-			{txt:"|",time:200},
-			{txt:"Déplacements avec les fleches directionelles",time:3000},
-			{txt:"|",time:200},
-			{txt:"Attention au niveau de carburant",time:2500},
-			{txt:"|",time:200},
-			{txt:"Les bidons remontent le niveau du réservoir.",time:3000},
-			{txt:"|",time:200},
-			{txt:"Rouler sur l'herbe coupée génère un Malus.",time:3000},
-			{txt:"|",time:200},
-			{txt:"Le bac de ramassage est à vider dans le compost,",time:3500},
-			{txt:"|",time:200},
-			{txt:"S'il déborde longtemps alors de l'herbe se replantera,",time:4000},
-			{txt:"|",time:200},
-			{txt:"il faut remplir un compost pour débloquer l'autre.",time:3500},
-			{txt:"|",time:200},
-			{txt:"Faites attention, mamie veille au grain.",time:3000},
-			{txt:"[aide]",time:50},
-		]
-	} },
+	"le_tuto":{ kd: kc=>{
+
+			if( kc==27 || kc==37 ){ bascule= "reglage"; } // gauche
+
+		}, init: _=>{
+			game.infos.cur_espacement= 0;
+			game.infos.help_list.forEach( obj=>{
+				add_obj( {id:game.infos.gene_id(),t:"text",x:obj.x,y:game.infos.cur_espacement+=game.infos.offset_espacement+obj.mt}, {str:obj.txt,color:obj.col,fs:obj.size} );
+			});
+		}, tick: _=>{
+		}, infos:{
+			cur_id: 0,
+			gene_id: _=>{ return game.infos.cur_id++; },
+			cur_espacement: -30,
+			offset_espacement: 60,
+			help_list:[
+				{x:375,mt:0,col:"#8b0",size:52,txt:"Touches :"},
+				{x:80,mt:30,col:"#068",size:32,txt:"F11= permet une meilleure experience de jeu"},
+				{x:80,mt:0,col:"#068",size:32,txt:"Droite= changer/valider &nbsp; Gauche= changer/quitter"},
+				{x:80,mt:0,col:"#068",size:32,txt:"Touches en jeu :"},
+				{x:80,mt:0,col:"#068",size:32,txt:"Haut, Bas, Gauche, Droite, &nbsp; Echap= retour au Menu"},
+				{x:320,mt:70,col:"#8b0",size:52,txt:"Pret à tondre ?"},
+				{x:80,mt:30,col:"#880",size:32,txt:"Le but est de tondre entierement la pelouse"},
+				{x:80,mt:0,col:"#880",size:32,txt:"Attention au niveau de carburant (Attrappez des bidons)"},
+				{x:80,mt:0,col:"#880",size:32,txt:"Evitez de rouler sur l'herbe coupée"},
+				{x:80,mt:0,col:"#880",size:32,txt:"Le bac de ramassage est à vider au compost"},
+				{x:80,mt:0,col:"#880",size:32,txt:"car le trop plein d'herbe risque de tomber par terre"},
+				{x:80,mt:0,col:"#880",size:32,txt:"Un compost rempli permet de débloquer l'autre."},
+				{x:80,mt:0,col:"#922",size:32,txt:"Faites attention, mamie veille au grain."},
+			],
+		}
+	},
 
 
 
@@ -318,17 +323,20 @@ let ecrans= {
 
 
 
-	"cinemat":{ kd: kc=>{}, init: _=>{
+	"cinemat":{ kd: kc=>{
+			if( kc==39 ){ game.infos.speed= 0.03; } // droite
+	}, init: _=>{
 
+		game.infos.speed= 1;
 		game.infos.cur_time= 0;
 		game.infos.cur_actu= -1;
 
 	}, tick: _=>{
 
 		game.infos.cur_time+= timeg;
-		if( game.infos.cur_actu<0 || game.infos.cur_time > game.infos.diapos[ game.infos.cur_actu ][0] ){
+		if( game.infos.cur_actu<0 || game.infos.cur_time >= game.infos.diapos[ game.infos.cur_actu ][0]*game.infos.speed*game.infos.diapospeed() ){
 
-			game.infos.cur_actu<0 ||( game.infos.cur_time-= game.infos.diapos[ game.infos.cur_actu ][0] );
+			game.infos.cur_actu<0 ||( game.infos.cur_time= 0 );
 			game.infos.cur_actu++;
 			if( game.infos.cur_actu < game.infos.diapos.length ){
 				game.infos.diapos[ game.infos.cur_actu ][1]();
@@ -339,24 +347,29 @@ let ecrans= {
 
 	}, infos:{
 
+		speed: 1,
+		diapospeed: _=> dev_prod.is_prod? 1: 0.1,
 		cur_time: null,
 		cur_actu: null,
+		cur_id: 0,
+		gene_id: _=>{ return game.infos.cur_id++; },
 		diapos: [
-			[dev_prod.diapospeed()*.2,_=>{}],
-			[dev_prod.diapospeed()*1.8,_=>{
-				add_obj( {id:"osef1",t:"text",x:290,y:385}, {str:"LaF3t' prod.",color:"#800",fs:80} );
-				add_obj( {id:"osef2",t:"text",x:285,y:380}, {str:"LaF3t' prod.",color:"#f80",fs:80} );
-				add_obj( {id:"osef3",t:"text",x:235,y:585}, {str:"vous présente :",color:"#800",fs:80} );
-				add_obj( {id:"osef4",t:"text",x:230,y:580}, {str:"vous présente :",color:"#f80",fs:80} );
+			[0.5,_=>{
+				add_obj( {id:game.infos.gene_id(),t:"text",x:684,y:950}, {str:"(Droite pour passer)",color:"#880",fs:32} );
 			}],
-			[dev_prod.diapospeed()*.5,_=>{ delete_scene(); }],
-			[dev_prod.diapospeed()*3.5,_=>{
-				add_obj( {id:"osef1",t:"text",x:286,y:414}, {str:"Crazy garden",color:"#800",fs:72} );
-				add_obj( {id:"osef2",t:"text",x:282,y:410}, {str:"Crazy garden",color:"#f80",fs:72} );
-				add_obj( {id:"osef3",t:"text",x:246,y:514}, {str:"(Gazon en folie)",color:"#800",fs:72} );
-				add_obj( {id:"osef4",t:"text",x:242,y:510}, {str:"(Gazon en folie)",color:"#f80",fs:72} );
+			[2.2,_=>{
+				add_obj( {id:game.infos.gene_id(),t:"text",x:290,y:125}, {str:"LaF3t' prod.",color:"#800",fs:80} );
+				add_obj( {id:game.infos.gene_id(),t:"text",x:285,y:120}, {str:"LaF3t' prod.",color:"#f80",fs:80} );
+				add_obj( {id:game.infos.gene_id(),t:"text",x:235,y:265}, {str:"vous présente :",color:"#800",fs:80} );
+				add_obj( {id:game.infos.gene_id(),t:"text",x:230,y:260}, {str:"vous présente :",color:"#f80",fs:80} );
 			}],
-			[dev_prod.diapospeed()*.5,_=>{ delete_scene(); }],
+			[3.0,_=>{
+				add_obj( {id:game.infos.gene_id(),t:"text",x:246,y:614}, {str:"(Gazon en folie)",color:"#800",fs:72} );
+				add_obj( {id:game.infos.gene_id(),t:"text",x:286,y:534}, {str:"Crazy garden",color:"#700",fs:72} );
+				add_obj( {id:game.infos.gene_id(),t:"text",x:282,y:530}, {str:"Crazy garden",color:"#d70",fs:72} );
+				add_obj( {id:game.infos.gene_id(),t:"text",x:242,y:610}, {str:"(Gazon en folie)",color:"#f80",fs:72} );
+			}],
+//			[0.3,_=>{ delete_scene(); }],
 		],
 
 	} },
