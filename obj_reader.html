@@ -1,4 +1,5 @@
 <!DOCTYPE html><html lang="fr"><head><title>JSON Viewer - msnbrest</title><meta charset="UTF-8">
+<link rel="icon" type="image/x-icon" sizes="128x128" href="favicon-128.ico">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="nanocss.css">
 <script src="nanojs.js"></script>
@@ -13,7 +14,12 @@ const h_col= ["#f0f","#f00","#f80","#dc0","#0c4","#0aa","#000"],
 
 
 
-ln_emsp= _=> "<br><span style='color:"+ h_col[nb_emps%7] +"'>#</span>"+ ("&emsp;".repeat(nb_emps)),
+//separator= "&emsp;",
+separator= "-",
+
+
+
+ln_emsp= _=> "<br><span style='color:"+ h_col[nb_emps%7] +"'>#</span>"+ (separator.repeat(nb_emps)),
 
 
 
@@ -22,20 +28,18 @@ totab= obj=>{
 	let out = "";
 	nb_emps++;
 
-	if( obj==null ){
-		out+= ln_emsp()+"<span style='color:#a50'>null</span>: "
-	}else{
-		let kz = Object.keys(obj); // rox pour tableau et objets
-		let i = 1;
-		for(let k1 of kz){
-			out+= ln_emsp()+"<span style='color:#a50'>"+k1+"</span>: ";
-			if( typeof obj[k1]=="object" ){
-				out+=totab(obj[k1]);
-			}else{
-				out+=( typeof obj[k1]=="number" ? "<span style='color:#d44'>" : typeof obj[k1]=="string" ? "<span style='color:#49d'>" : "<span>" )+obj[k1]+"</span>"+(i<kz.length?",":"");
-			}
-			i++;
+	let kz = Object.keys(obj); // rox pour tableau et objets
+	let i = 1;
+	for(let k1 of kz){
+		out+= ln_emsp()+"<span style='color:#a50'>"+k1+"</span>: ";
+		if( obj[k1]==null ){
+			out+= "<span style='color:#999'>NULL</span>"+(i<kz.length?",":"");
+		}else if( typeof obj[k1]=="object" ){
+			out+=totab(obj[k1]);
+		}else{
+			out+=( typeof obj[k1]=="number" ? "<span style='color:#d44'>" : typeof obj[k1]=="string" ? "<span style='color:#49d'>" : "<span>" )+obj[k1]+"</span>"+(i<kz.length?",":"");
 		}
+		i++;
 	}
 
 	nb_emps--;
