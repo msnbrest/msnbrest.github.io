@@ -3,27 +3,53 @@
 <title>Accueil - msnbrest</title>
 <link rel="icon" type="image/x-icon" sizes="128x128" href="favicon-128.ico">
 <link rel="stylesheet" href="nanocss.css">
+<style>
+header{min-width:8em;width:25%;max-width:16em;}
+</style>
 <script src="nanojs.js"></script>
-</head><body class="darkmode mh100vh flex flex_column flex_between">
+<script>
 
-<header class="borb1_666 mb04 back222 py08">
-    <ul class="flex flex_spaced flex_wrap">
-        <li class="my08"><a class="tag btn big jaune" href="w25q128.html">Arduino W25Q128 W25Qxx</a></li>
-        <li class="my08"><a class="tag btn big jaune" href="convertisseur_nombre.html">Euro equivalent Google</a></li>
-        <li class="my08"><a class="tag btn big jaune" href="echeancier.html">Echéancier / Etalement</a></li>
-        <li class="my08"><a class="tag btn big jaune" href="obj_reader.html">JSON Viewer</a></li>
-        <li class="my08"><a class="tag btn big jaune" href="distance_by_altitude_terre.html">Terre pas plate</a></li>
-		<li class="my08"><a class="tag btn big jaune" href="compress_jpg.html">Compresser jpg</a></li>
-        <li class="my08"><a class="tag btn big jaune" href="jeu_gazon_en_folie.html">Tiny Game : Gazon en folie</a>&nbsp;<a class="tag btn big jaune" href="jeu_tondeuse.html">(old -v)</a></li>
-    </ul>
-</header>
+const init= _=>{
+	let t_cat_id= "";
+	const maybe_categ= obj=>{ if( t_cat_id===obj.cat_id ){ return ""; } t_cat_id=obj.cat_id; return `<div class="mt12 bold cc36">${datas.categs[obj.cat_id]}</div><hr>`; };
+	_sel("header").innerHTML= datas.liens.map( obj=> maybe_categ(obj)+`<a class="btn" href="${obj.url}"><div class="my08 tag btn bc36 box3d" style="margin-left:.4em;padding-bottom:.4em;">${obj.title}</div></a>` ).join("");
+},
 
-<main class="back222 br12 w90p mxa mxw1200px py20 px20 my08">Il faudra que je pense à faire une présentation.
-<div style="margin-top:40px">je place ça ici, mais il faudra que je fasse un projet propre pour proposer cette évolution à qui le veut.<br><a href="Mint-XP_v2021.zip">Telecharger la version modifiée de Mint-XP_v2021.zip</a></div>
+
+
+datas={
+
+categs:["Utile","Tiny Game","Doc"],
+
+liens:[
+{cat_id:0,url:"convertisseur_nombre.html",title:"ArGens vs Google"},
+{cat_id:0,url:"compress_jpg.html",title:"Compresser jpg"},
+{cat_id:0,url:"echeancier.html",title:"Echéancier"},
+{cat_id:0,url:"obj_reader.html",title:"JSON Viewer"},
+{cat_id:0,url:"distance_by_altitude_terre.html",title:"Terre pas plate"},
+{cat_id:1,url:"jeu_gpt_train.html",title:"Train en gare"},
+{cat_id:1,url:"jeu_gazon_en_folie.html",title:"Gazon en folie"},
+{cat_id:1,url:"jeu_tondeuse.html",title:"Gazon en folie(alpha)"},
+{cat_id:2,url:"w25q128.html",title:"Arduino W25Qxx"},
+],
+
+};
+
+
+
+window.addEventListener("load",init,false);
+
+</script>
+</head><body class="darkmode mh100vh flex flex_between">
+
+<header class="borb1_666 back222 px08"></header>
+
+<main class="back222 br12 mxa py20 px20 my08" style="width:calc(100% - 20em);min-width:20em;">
+<h2>Présentation :</h2><br>
+todo: faire une présentation.<br><br><hr>
+-- lien --<br><br>
+todo: faire un projet propre pour proposer cette évolution<br><br>
+<a class="tag btn jaune" href="Mint-XP_v2021.zip">version modifiée de Mint-XP_v2021.zip</a><br><br>pour cinnamon debian
 </main>
-
-<footer class="bort1_666 back222 px08 py08">
-todo
-</footer>
 
 </body></html>

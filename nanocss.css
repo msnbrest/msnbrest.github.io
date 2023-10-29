@@ -82,6 +82,7 @@ table tr td:nth-child(1){padding-right:2rem}
 
 .c999{color:#999}
 .caaa{color:#aaa}
+.cc36{color:#c36}
 
 .bor0{border:0}
 .br9{border-radius:9px}
@@ -92,21 +93,27 @@ table tr td:nth-child(1){padding-right:2rem}
 .back2a2a2a{background:#2a2a2a}
 .bs1fff{box-shadow:0 0 0 1px #666 inset}
 
+.bold{font-weight:bold;}
+
 /* specific */
 
-.tag{ font-size:11pt;font-weight:bold;color:#000;background:#999;margin-bottom:.3rem;padding:.2rem .6rem;border-radius:3px; }
+.tag{ font-size:11pt;font-weight:bold;color:#000;background:#999;margin-bottom:.3rem;padding:.3rem .6rem;border-radius:6px; }
+.tag.box3d{box-shadow:6px 6px 6px 0 #0004,4px 4px 4px 0 #fff2 inset;}
 .tag.tiny{padding-top:0;padding-bottom:0;}
 .tag.big{padding:.8rem 1.4rem;}
 .btn{ background:hsl(212,92%,40%);cursor:pointer;color:#fff; }
 .btn:hover{ color:#888;background:hsl(212,80%,20%); }
 
 .tag.jaune, .btn.jaune{ color:#000;background:hsl(48,100%,40%); }
-.btn.jaune:hover{ background:hsl(48,100%,24%); }
+.btn.jaune:hover{ color:#000;background:hsl(48,100%,24%); }
 
 .tag.rouge, .btn.rouge{ color:#fff;background:hsl(0,100%,40%); }
-.btn.rouge:hover{ background:hsl(0,100%,24%); }
+.btn.rouge:hover{ color:#bbb;background:hsl(0,100%,24%); }
 
-.btn:active, .btn.jaune:active, .btn.rouge:active{ color:#888; background:#000; }
+.tag.bc36, .btn.bc36{ color:#fff;background:#c36a; }
+.btn.bc36:hover{ color:#bbb;background:#f483; }
+
+.btn:active, .btn.jaune:active, .btn.rouge:active, .btn.bc36:active{ color:#888; background:#000; }
 
 
 .hyper_center{
