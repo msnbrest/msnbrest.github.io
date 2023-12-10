@@ -1,0 +1,60 @@
+<!DOCTYPE html><html lang="fr"><head><title>Mini Jeu - casse tete laby</title><meta charset="UTF-8">
+<link rel="icon" type="image/x-icon" sizes="128x128" href="favicon-128.ico">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="nanocss.css">
+<script src="nanojs.js"></script>
+<style>
+body{background:#333;color:#bbb;font-family:Arial, sans-serif;}
+
+body{ color:#8c4; background:#333; }
+div{ position:relative; }
+
+.od{overflow:hidden;}
+.table{ display:table; }
+.ma{ margin:auto; }
+.case_blue{ background:#07a; }
+.case_dark{ background:#732; }
+.pointer{cursor:pointer;}
+.over_back353:hover{background:#353;}
+.pd8_0{padding:.8em 0;}
+
+.grid{
+    display:flex;
+	flex-wrap:wrap;
+    margin:0 auto;
+	width:calc(50px * 10);
+}
+aside{
+    width: 50px;
+    height: 50px;
+    box-shadow: 0 0 0 1px #fff1 inset;
+}
+#temp_help{display:table;margin:auto;}
+
+</style>
+<script src="laby_casse_tete.js"></script>
+</head><body class="darkmode mh100vh flex flex_column flex_between">
+
+<header class="borb1_666 mb04 back222 py08">
+	<ul class="flex flex_spaced">
+		<li class="my08"><a class="tag btn big jaune" href="index.html">Accueil</a></li>
+	</ul>
+</header>
+
+<main class="back222 br12 w90p mxa mxw1200px py20 px20 my08">
+
+<div class="table ma">
+	<div class="od pointer over_back353" style="height:22px;" onclick="sw_h(this)">Idée venue en ayant vu une miniature youtube:<br><img src="https://i.ytimg.com/vi/w1YF47-8iro/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCudk-BPESlbhDQbu3VxkUYHtEJOg"></div>
+	<div id="score" class="pd8_0"></div>
+</div>
+<div id="temp_help">But : monter &nbsp; | &nbsp; Touches : haut, bas, gauche, droite.</div>
+<div class="grid" id="grid"></div>
+
+</main>
+
+<footer class="bort1_666 back222 px08 py08">
+	todo
+</footer>
+
+</body></html>
+
