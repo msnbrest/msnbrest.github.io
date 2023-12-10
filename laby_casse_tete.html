@@ -8,6 +8,8 @@ body{background:#333;color:#bbb;font-family:Arial, sans-serif;}
 
 body{ color:#8c4; background:#333; }
 div{ position:relative; }
+button{background:#181818;color:#ccc;border:0;border-radius:5px;padding:.3em .9em;box-shadow:0 0 0 1px #333 inset;}
+button:hover{background:#234;cursor:pointer;box-shadow:0 0 0 1px #678 inset;}
 
 .od{overflow:hidden;}
 .table{ display:table; }
@@ -29,7 +31,7 @@ aside{
     height: 50px;
     box-shadow: 0 0 0 1px #fff1 inset;
 }
-#temp_help{display:table;margin:auto;}
+#menu_game{display:table;margin:auto;}
 
 </style>
 <script src="laby_casse_tete.js"></script>
@@ -45,9 +47,11 @@ aside{
 
 <div class="table ma">
 	<div class="od pointer over_back353" style="height:22px;" onclick="sw_h(this)">Idée venue en ayant vu une miniature youtube:<br><img src="https://i.ytimg.com/vi/w1YF47-8iro/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCudk-BPESlbhDQbu3VxkUYHtEJOg"></div>
-	<div id="score" class="pd8_0"></div>
+	<div class="pd8_0"><span id="now_score"></span> &nbsp; | &nbsp; <span id="best_score"></span> &nbsp; | &nbsp; <span id="last_score"></span> &nbsp; | &nbsp; <span id="oups"></span></div>
+	<div><span id="duration"></span></div>
 </div>
-<div id="temp_help">But : monter &nbsp; | &nbsp; Touches : haut, bas, gauche, droite.</div>
+<div id="menu_game"></div>
+
 <div class="grid" id="grid"></div>
 
 </main>
