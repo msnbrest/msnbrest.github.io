@@ -63,6 +63,7 @@ reset_game= ( _maxduration=null, _maxheight=null, )=>{
 	new_best_score(0);
 	new_last_score(0);
 	new_oups(0);
+	show_duration();
 
 	// init grille
 	add_line(1); // regle : toujours au moins une ligne pleine en bas, pour éviter soucis out of bound, negative index array et generation need last line
@@ -92,7 +93,7 @@ maybe_move= (dirx,diry)=>{
 	me.now_score< me.y-me.decal_y && new_now_score(me.y-me.decal_y);
 	maybe_add_random_line(me.len+me.y-me.decal_y);
 	redraw();
-	me.y-me.decal_y>=me.maxheight &&( game_win() );
+	me.maxheight==null ||( me.y-me.decal_y>=me.maxheight &&( game_win() ) );
 },
 
 
@@ -132,7 +133,7 @@ new_oups= val=>{
 
 
 
-show_duration= val=>{
+show_duration= _=>{
 
 	_sel("#duration").innerHTML= me.maxduration? `Time: ${me.duration} / ${me.maxduration}`: "";
 },
@@ -301,6 +302,25 @@ kk= event=>{
 let me= null;
 
 // TODO apres, faire "defiler" les cases, car là c'est un peu trop brut
+
+/*
+ajouter radio
+
+
+<button onclick="main.pley(this);">play</button>
+
+<audio src=""></audio>
+
+
+
+pley: thiss=>{
+	_sel("audio").src="http://ice3.securenetsystems.net/BILTMORE";
+	//_sel("audio").volume= 0.2;
+	_sel("audio").play();
+	thiss.remove();
+},
+
+*/
 
 window.addEventListener("load",init,false);
 window.addEventListener("keydown",kk,0);
