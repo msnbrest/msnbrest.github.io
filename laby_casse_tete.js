@@ -1,8 +1,11 @@
-const init= _=>{
+const f_back= id=> `background:#${list_icones[id].back} url(\'data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\' viewBox=\\'0 0 100 100\\'><g fill=\\'%23ddd\\'><path d=\\'M${list_icones[id].path}z\\'/></g></svg>\') no-repeat center center/contain;`,
+
+init= _=>{
 
 	me= {};
 	// -- config --
 	me.len= 10;
+	me.is_fullscreen= false;
 
 	// -- création tableau html --
 	(grid=>{
@@ -11,11 +14,20 @@ const init= _=>{
 
 		let out="";
 
-		for( let i0= 0, lenn=me.len*me.len; i0<lenn; i0++ ){ out+= "<aside class='' data-tile='"+ (lenn-( ((i0/10)|0)+1 )*10+i0%10) +"'></aside>"; }
+		for( let i0= 0, lenn=me.len*me.len; i0<lenn; i0++ ){ out+= "<aside data-tile='"+ (lenn-( ((i0/10)|0)+1 )*10+i0%10) +"'></aside>"; }
 
 		grid.innerHTML= out;
 
-	})( document.querySelector("#grid") );
+	})( _sel("#grid") );
+
+	// -- création tableau touches --
+	(grid=>{
+
+		if( !grid ){ return; }
+
+		grid.innerHTML= list_touches.map( obj=> `<aside style="${f_back(obj.icon)}" onmousedown="list_touches[${obj.id}].act()"></aside>` ).join("");
+
+	})( _sel("#touches") );
 
 	// -- init de base --
 
@@ -27,7 +39,28 @@ const init= _=>{
 	setTimeout("_sel('#menu_game').style.background='#ff04';",1200);
 	setTimeout("_sel('#menu_game').style.background='#fff0';",1300);
 	setInterval(loop,1000);
+	resize();
 
+},
+
+
+
+list_touches= [
+
+	{ id:0, icon:"fleche gps haut", act:_=>{ kk({keyCode:38}); } },
+	{ id:1, icon:"fleche gps gauche", act:_=>{ kk({keyCode:37}); } },
+	{ id:2, icon:"fleche gps droite", act:_=>{ kk({keyCode:39}); } },
+	{ id:3, icon:"fleche gps bas", act:_=>{ kk({keyCode:40}); } }
+],
+
+
+
+list_icones= {
+
+	"fleche gps haut":{ "path":"50,10l40,80l-40-20l-40,20", "creator":"rand+msnbrest", "back":"8408" },
+	"fleche gps gauche":{ "path":"10,50l80-40l-20,40l20,40", "creator":"rand+msnbrest", "back":"8408" },
+	"fleche gps droite":{ "path":"90,50l-80,40l20-40l-20-40", "creator":"rand+msnbrest", "back":"8408" },
+	"fleche gps bas":{ "path":"50,90l-40-80l40,20l40-20", "creator":"rand+msnbrest", "back":"8408" },
 },
 
 
@@ -68,8 +101,8 @@ reset_game= ( _maxduration=null, _maxheight=null, )=>{
 	// init grille
 	add_line(1); // regle : toujours au moins une ligne pleine en bas, pour éviter soucis out of bound, negative index array et generation need last line
 	add_line(1);
-
 	add_line(1);
+
 	add_line(0);
 
 	while( me.grille.length<10 ){ add_line(null); } // gene suite grille
@@ -289,6 +322,29 @@ loop= osef=>{
 
 
 
+resize= _=>{
+
+	src_w= window.innerWidth;
+	src_h= window.innerHeight;
+	src_m= (src_h>src_w?src_w:src_h) -(me.is_fullscreen?0:100);
+	_sel("#style1").innerHTML= `
+	.grid{ width:${src_m}px; }
+	aside{
+		width:${src_m/me.len}px;
+		height:${src_m/me.len}px;
+	}
+	#touches>aside{
+		width:${src_m/list_touches.length}px;
+		height:${src_m/list_touches.length}px;
+		border-radius:1em;
+	}
+	#touches>aside:active{
+		box-shadow:0 0 0 1em #000 inset;
+	}`;
+},
+
+
+
 kk= event=>{
 
 	if( event.keyCode==37 ){ maybe_move(-1, 0); } // gauche
@@ -324,4 +380,4 @@ pley: thiss=>{
 
 window.addEventListener("load",init,false);
 window.addEventListener("keydown",kk,0);
-
+window.addEventListener( "resize", resize, 0 );
