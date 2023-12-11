@@ -1,3 +1,4 @@
+// idée le 2 décembre 2023, début codage le 8déc, version alpha le 10dec, version beta avec timing,resize,tactil le 11dec
 const f_back= id=> `background:#${list_icones[id].back} url(\'data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\' viewBox=\\'0 0 100 100\\'><g fill=\\'%23ddd\\'><path d=\\'M${list_icones[id].path}z\\'/></g></svg>\') no-repeat center center/contain;`,
 
 init= _=>{
@@ -40,6 +41,10 @@ init= _=>{
 	setTimeout("_sel('#menu_game').style.background='#fff0';",1300);
 	setInterval(loop,1000);
 	resize();
+	if( /webkit.*mobile/i.test(navigator.userAgent) ){ // is_mobile
+		_sel("main").classList.remove("w90p");
+		_sel("main").classList.remove("px20");
+	}
 
 },
 
@@ -47,10 +52,10 @@ init= _=>{
 
 list_touches= [
 
-	{ id:0, icon:"fleche gps haut", act:_=>{ kk({keyCode:38}); } },
-	{ id:1, icon:"fleche gps gauche", act:_=>{ kk({keyCode:37}); } },
-	{ id:2, icon:"fleche gps droite", act:_=>{ kk({keyCode:39}); } },
-	{ id:3, icon:"fleche gps bas", act:_=>{ kk({keyCode:40}); } }
+	{ id:0, icon:"fleche gps haut", act:_=>{ kk({keyCode:38,fake:1}); } },
+	{ id:1, icon:"fleche gps gauche", act:_=>{ kk({keyCode:37,fake:1}); } },
+	{ id:2, icon:"fleche gps droite", act:_=>{ kk({keyCode:39,fake:1}); } },
+	{ id:3, icon:"fleche gps bas", act:_=>{ kk({keyCode:40,fake:1}); } }
 ],
 
 
@@ -116,6 +121,9 @@ reset_game= ( _maxduration=null, _maxheight=null, )=>{
 
 maybe_move= (dirx,diry)=>{
 
+	if( !me.grille ){
+		return;
+	}
 	const obj= test_move(dirx,diry);
 	if( obj==null ){
 		new_oups( me.oups+1 );
@@ -325,8 +333,8 @@ loop= osef=>{
 resize= _=>{
 
 	src_w= window.innerWidth;
-	src_h= window.innerHeight;
-	src_m= (src_h>src_w?src_w:src_h) -(me.is_fullscreen?0:100);
+	src_h= window.innerHeight -(me.is_fullscreen?0:220);
+	src_m= (src_h>src_w?src_w:src_h);
 	_sel("#style1").innerHTML= `
 	.grid{ width:${src_m}px; }
 	aside{
@@ -347,10 +355,10 @@ resize= _=>{
 
 kk= event=>{
 
-	if( event.keyCode==37 ){ maybe_move(-1, 0); } // gauche
-	if( event.keyCode==38 ){ maybe_move( 0, 1); } // haut
-	if( event.keyCode==39 ){ maybe_move( 1, 0); } // droite
-	if( event.keyCode==40 ){ maybe_move( 0,-1); } // bas
+	if( event.keyCode==37 ){ maybe_move(-1, 0); event.fake||(event.preventDefault()); } // gauche
+	if( event.keyCode==38 ){ maybe_move( 0, 1); event.fake||(event.preventDefault()); } // haut
+	if( event.keyCode==39 ){ maybe_move( 1, 0); event.fake||(event.preventDefault()); } // droite
+	if( event.keyCode==40 ){ maybe_move( 0,-1); event.fake||(event.preventDefault()); } // bas
 };
 
 
