@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="fr"><head><title>Meilleur chargement</title><meta charset="UTF-8">
+<!DOCTYPE html><html lang="fr"><head><title>Meilleur Stockage</title><meta charset="UTF-8">
 <link rel="icon" type="image/x-icon" sizes="128x128" href="favicon-128.ico">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="nanocss.css">
@@ -8,12 +8,15 @@
 .cadre{width:50%;min-height:90px;}
 .contour_cadre{box-shadow:0 0 0 1px #444 inset;}
 .contour1{padding:1.2em .8em 1em 1.4em;box-shadow:4px 4px 16px 0 #111;border-radius:12px;}
+.fixed0{position:fixed;left:0;top:0;width:100%;z-index:2;}
+.invinv{filter:invert(1);}
+button{padding:.3em .5em;font-size:.9em;}
 </style>
 <script>
 
 let canv = { c: null, d: null },
 
-qualitys= [ 1, 8, 16, 24, 32, 40, 56, 72, 88, 92, 96, 99 ],
+qualitys= [ 16, 24, 32, 40, 56, 72 ],//, 1, 8, 88, 92, 96, 99
 
 laimg = [],
 img_datas = null,
@@ -25,12 +28,15 @@ file_orisiz,
 
 // tiens c'est marrant, ça fait "divversion"
 div_versions= vv=>`<div class="cadre contour1">
-<div class="mb10"><span class="tag btn" class="bt" onclick="go_dl(${vv})">Compresser ${vv}% <span id="sizdl${vv}"></span></span></div>
+<div class="mb10"><span class="tag btn" class="bt" onclick="go_dl(${vv})">Garder "${vv}%" <span id="sizdl${vv}"></span></span></div>
 <div id="ladl${vv}" class="w100p"></div></div>`,
 
 
 
 init= _=>{
+
+	_sel("#check_size_ori").checked= false;
+	_sel("#check_size_ori").onchange= event=>{ recevoir_fichiers.check_size_ori= event.target.checked; };
 
 	const dropArea = _sel(".glisser");
 
@@ -50,7 +56,7 @@ init= _=>{
 file_by_input= event=>{
 
 	if( event.target && event.target.files && event.target.files.length>0 ){
-		recevoir_fichiers( event.target.files[0] );
+		recevoir_fichiers.f( event.target.files[0] );
 	}
 },
 
@@ -59,13 +65,19 @@ file_by_input= event=>{
 file_by_drop= event=>{
 
 	if( event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length>0 ){
-		recevoir_fichiers( event.dataTransfer.files[0] );
+		recevoir_fichiers.f( event.dataTransfer.files[0] );
 	}
 },
 
 
 
-recevoir_fichiers= file=>{
+recevoir_fichiers= {
+
+check_size_ori: false,
+
+f: file=>{
+
+	_sel(".glisser").classList.remove("tag");
 
 	if( !file.type ){ alert('Error: The File.type property does not appear to be supported on this browser.'); return; }
 
@@ -80,12 +92,25 @@ recevoir_fichiers= file=>{
 		_sel("#div_1_importation").style.background= "url(" + img_datas + ")  no-repeat center center/contain";
 		oGrayImg.onload= _=>{
 
-			let mmm= oGrayImg.width < oGrayImg.height ? oGrayImg.height : oGrayImg.width;
-			oGrayImg.style= "width:" + (oGrayImg.width / mmm * 400) + "px;height:" + (oGrayImg.height / mmm * 400) + "px";
-			canv.c.width= oGrayImg.width;
-			canv.c.height= oGrayImg.height;
-			canv.c.style= "width:" + (oGrayImg.width / mmm * 400) + "px;height:" + (oGrayImg.height / mmm * 400) + "px";
-			canv.d.drawImage( oGrayImg, 0, 0, oGrayImg.width, oGrayImg.height, 0, 0, oGrayImg.width, oGrayImg.height );
+			let o_gt= oGrayImg.width < oGrayImg.height ? oGrayImg.height : oGrayImg.width;
+			let leratio= 1;
+
+			if( recevoir_fichiers.check_size_ori==false && o_gt>1920 ){ // ok on doit modif la taille, et grande
+				leratio= 1920/o_gt;
+				if( leratio>1 ){ leratio= 1; } // eviter zoom
+			}
+
+			if( recevoir_fichiers.check_size_ori==false && forcer_size_img.maxwidth!=null ){ // on limite la taille
+				leratio*= forcer_size_img.maxwidth/100;
+			}
+
+			// -- 400 px max --
+			oGrayImg.style= "width:" + (oGrayImg.width / o_gt * 400) + "px;height:" + (oGrayImg.height / o_gt * 400) + "px";
+			canv.c.width= oGrayImg.width * leratio;
+			canv.c.height= oGrayImg.height * leratio;
+			canv.c.style= "width:" + (oGrayImg.width / o_gt * 400) + "px;height:" + (oGrayImg.height / o_gt * 400) + "px";
+
+			canv.d.drawImage( oGrayImg, 0, 0, oGrayImg.width, oGrayImg.height, 0, 0, oGrayImg.width * leratio, oGrayImg.height * leratio );
 
 			qualitys.forEach(vv=>{ update_div(vv); });
 		};
@@ -95,6 +120,17 @@ recevoir_fichiers= file=>{
 	filename_tab= file.name.match(/(.*)\.([^\.]+)$/).slice(1) || [file.name,""]; // soit le titre+ext soit le titre complet au cas où.
 	reader.readAsDataURL(file);
 
+}
+},
+
+
+
+forcer_size_img= {
+maxwidth: null,
+f: thiss=>{
+forcer_size_img.maxwidth= prompt("max width %? echap=reset",forcer_size_img.maxwidth);
+thiss.innerHTML= "max width is "+ (forcer_size_img.maxwidth==null? "bypass": (forcer_size_img.maxwidth+"%") );
+}
 },
 
 
@@ -124,7 +160,7 @@ update_div= vv=>{
 	la.style.background= "url(" + laimg[vv] + ")  no-repeat center center/contain";
 	la.onmousemove= event=> moved(event);
 	la.onmouseout= event=>{ event.target.style.backgroundSize="contain"; event.target.style.backgroundPosition="0 0"; };
-	_sel("#sizdl" + vv).innerHTML= " = "+( laimg[vv].length*0.00075|0 )+"Ko ( "+ (laimg[vv].length*0.75/file_orisiz*100|0) +"% de l'importé)";
+	_sel("#sizdl" + vv).innerHTML= "=> "+( laimg[vv].length*0.00075|0 )+"Ko soit "+ (laimg[vv].length*0.75/file_orisiz*100|0) +"% de l'importé";
 },
 
 
@@ -164,7 +200,7 @@ window.addEventListener("load",init,false);
 
 
 
-<div class="mb20 contour1">
+<div class="mb20 contour1 fixed0">
 
 <div class="mb10">1) <span class="tag btn jaune" style="opacity:.75" onclick="_sel('#ducro').click()">Importer un fichier</span> ou</div>
 
@@ -192,7 +228,8 @@ window.addEventListener("load",init,false);
 
 </div>
 
-
+<input type="checkbox" id="check_size_ori" class="invinv"> Garder taille Originale | 
+<button class="invinv" onclick="forcer_size_img.f(this)">max width is bypass</button>
 
 <div class="flex flex_wrap" id="div_versions"></div>
 
