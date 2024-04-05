@@ -1,0 +1,188 @@
+<!DOCTYPE html><html lang="fr"><head><title>Minuteur - msnbrest</title><meta charset="UTF-8">
+<link rel="icon" type="image/x-icon" sizes="128x128" href="favicon-128.ico">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="nanocss.css">
+<style>
+button{background:#1a1a1a;color:#aaa;border:1px solid #555;border-radius:4px;padding:.3em .8em .2em .8em;cursor:pointer;}
+button:hover{background:#111}
+main{user-select:none;}
+
+.sub_header{ background:#222; margin-bottom:2rem; }
+#is_alert{ width:50vw; height:60vh; background:#222 }
+#time_wait{ color:#333; border:1px solid #234; background:rgba(32,32,32,.6); padding:.4rem .5rem; font:2rem Rubik; min-width:140px; text-align:center; }
+.alert #time_wait{ background:#b60 }
+.actived #time_wait{ color:#0f0; }
+#back_rotation{ border:6px solid #048; border-radius:50%; width:320px;height:320px; }
+.actived #back_rotation{ animation:rotaaa 12s infinite linear; }
+.ligne_in_rotation{width:6px;position:absolute;left:49%;top:8%;height:40%;background:#048;display:table;margin:auto}
+.alert #back_rotation{ animation:tremblements .9s infinite linear; }
+.flex_xy_center{ display:flex; align-items:center; justify-content:center; }
+.abs_100p{ position:absolute; left:0; top:0; width:100%; height:100%; }
+
+@keyframes rotaaa{
+	0%{transform:rotateZ(0deg);}
+	100%{transform:rotateZ(360deg);}
+}
+@keyframes tremblements{
+	0%{transform:translateX(16px) translateY(-4px);}
+	5%{transform:translateX(-9px) translateY(16px);}
+	10%{transform:translateX(4px) translateY(4px);}
+	15%{transform:translateX(-16px) translateY(-9px);}
+	20%{transform:translateX(-4px) translateY(16px);}
+	25%{transform:translateX(16px) translateY(-16px);}
+	30%{transform:translateX(-4px) translateY(-4px);}
+	35%{transform:translateX(9px) translateY(4px);}
+	40%{transform:translateX(-16px) translateY(-9px);}
+	45%{transform:translateX(4px) translateY(9px);}
+	50%{transform:translateX(9px) translateY(-16px);}
+	55%{transform:translateX(-9px) translateY(4px);}
+	60%{transform:translateX(16px) translateY(9px);}
+	65%{transform:translateX(-9px) translateY(-16px);}
+	70%{transform:translateX(9px) translateY(-4px);}
+	75%{transform:translateX(-16px) translateY(4px);}
+	80%{transform:translateX(4px) translateY(-9px);}
+	85%{transform:translateX(-16px) translateY(9px);}
+	90%{transform:translateX(-4px) translateY(-16px);}
+	95%{transform:translateX(9px) translateY(16px);}
+	100%{transform:translateX(-4px) translateY(-9px);}
+}
+</style>
+<script src="nanojs.js"></script>
+<script>
+let alarm= 0, // 0 = off, 1 = on, 2 = sonne
+
+time_futur= null,
+
+alarm_dans= ( vv, sign )=>{
+	sign>0 && (time_futur==null || time_futur<Date.now()) &&( time_futur= Date.now() );
+	// ajoute, retire ou défini temps, selon sign ( 1, -1, 0 )
+	time_futur = sign>0?( time_futur+vv*1000 ):sign<0?( time_futur-vv*1000 ):( Date.now() + vv*1000 );
+	alarm = 1;
+
+},
+
+init= _=>{ setInterval( draw, 200 ); },
+
+to2= vv=> vv<10? ("0"+vv): vv,
+
+_id= vv=> document.getElementById(vv),
+
+
+
+draw= _=>{
+
+	let tim = "";
+
+	if( alarm == 2 ){
+		// alert
+		tim="! ! !";
+		_id("is_alert").classList.contains("actived") &&( _id("is_alert").classList.remove("actived") );
+		_id("is_alert").classList.contains("alert") ||( _id("is_alert").classList.add("alert") );
+		_id("myaudio").paused? _id("myaudio").play():0;
+
+	}else if( alarm == 1 ){
+		// wait
+		if( time_futur<Date.now() ){ alarm=2; }
+		tim = restant( time_futur, ["",""] );
+		_id("is_alert").classList.contains("actived") ||( _id("is_alert").classList.add("actived") );
+		_id("is_alert").classList.contains("alert") &&( _id("is_alert").classList.remove("alert") );
+		_id("myaudio").paused?0:_id("myaudio").pause();
+
+	}else{
+		// off.
+		tim= time_futur? restant( time_futur, ["",""] ): "Pret";
+		_id("is_alert").classList.contains("actived") &&( _id("is_alert").classList.remove("actived") );
+		_id("is_alert").classList.contains("alert") &&( _id("is_alert").classList.remove("alert") );
+		_id("myaudio").paused?0:_id("myaudio").pause();
+
+	}
+
+	_id("time_wait").innerHTML= tim;
+},
+
+
+
+clicked= _=>{
+
+	if( alarm == 2 ){
+		alarm = 0;
+	}else if( alarm == 1 ){
+		alarm = 0;
+	}else if( time_futur>Date.now() ){
+		alarm = 1;
+	}
+},
+
+
+
+restant= ( unix, mots=["Dans ","Depuis "] )=>{
+	// get fr difference entre now et unix.
+
+	// default, dans (futur, positif)
+	let dans = true;
+	let diff = ~~((unix-Date.now())/1000);
+
+	if(diff<0){
+		// depuis (passé, négatif)
+		dans = false;
+		diff = -diff;
+	}
+
+	let out="";
+	let jjou = ~~(diff/86400);
+	let hheu = ~~((diff-86400*jjou)/3600);
+	let mmin = ~~((diff-86400*jjou-3600*hheu)/60);
+	let ssec = ~~(diff-86400*jjou-3600*hheu-60*mmin);
+
+	if( jjou > 0 ){
+		// plus d'un jour, donc afficher jour
+		out += jjou + "J ";
+	}
+
+	if( jjou < 4 ){
+		// moins de 4 jours, donc afficher heures
+
+		if( hheu>0 ){ out += to2(hheu) + "h"; }
+
+		if( mmin>0 || hheu>0 ){ out += to2(mmin) + ":"; }
+
+		out += to2(ssec);
+
+	}
+	return (dans?mots[0]:mots[1]) + out.trim();// 8h24:12
+};
+
+
+
+window.addEventListener("load",init,false);
+</script>
+</head><body class="darkmode mh100vh flex flex_column flex_between">
+
+<header class="borb1_666 mb04 back222 py08">
+    <ul class="flex flex_spaced">
+        <li class="my08"><a class="tag btn big jaune" href="index.html">Accueil</a></li>
+    </ul>
+</header>
+
+<main class="back222 br12 mxa py20 px20 my08">
+
+<div class="tac sub_header">
+	<button onclick="alarm_dans(15,-1);">- 15 sec</button> &#60;- 
+	<button onclick="alarm_dans(5*60,0);" style="background:#030">= 5 Min</button> -&#62;
+	<button onclick="alarm_dans(15,1);">+ 15 sec</button>
+</div>
+
+<div id="is_alert" onclick="clicked()">
+	<div class="abs_100p flex_xy_center"><div id="back_rotation"><div class="ligne_in_rotation"></div></div></div>
+	<div class="abs_100p flex_xy_center"><div id="time_wait"></div></div>
+</div>
+
+<audio id="myaudio" loop="loop"><source src="buzzer_alarm2s.ogg"/></audio>
+
+</main>
+
+<footer class="bort1_666 back222 px08 py08">
+todo
+</footer>
+
+</body></html>
