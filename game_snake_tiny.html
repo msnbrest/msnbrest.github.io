@@ -1,0 +1,219 @@
+<!DOCTYPE html><html><head>
+<meta charset="UTF-8">
+<title>Game Snake Tiny</title>
+<link rel="icon" type="image/x-icon" sizes="128x128" href="favicon-128.ico">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+
+body{ min-height:100vh;margin:0;background:#222;overflow:hidden;display:flex;justify-content:center;align-items:center; }
+canvas{ box-shadow:0 0 0 3px #400 inset;background:#111;cursor:none; }
+.bt_home{ position:absolute;left:4px;top:4px;color:#aa3366;box-shadow:0 0 0 1px #882255 inset;padding:.25em .7em .2em .7em;border-radius:5px;cursor:pointer;text-decoration:none; }
+.bt_home:hover{ background:#000; }
+
+</style>
+<script>
+
+// la base du jeu provient d'une source que je n'arrive pas à retrouver, reconnaissable par son style très carré.
+// j'ai ajouté l'écran de fin (qui n'existait qu'au lancement, ensuite c'était noir)
+// puis j'ai opti les fonctions, les noms, et ajouté du contenu (memo plusieurs touches, retry, zone config, couleurs et css, démarrage clavier et pas au clic ...)
+
+let html_cv, ctx, gameloop, oldpos, w, h,
+
+config={
+	zoom: 32,
+	map_w: 32,
+	map_h: 16,
+	danger_border: true, // TODO
+	diffic: 2, // 1 2 3 is normal to hard, and 0 is no frame no end_screen
+},
+
+lang= {
+	en:{
+		diffic: ["Paused"," Easy  ","Normal","D.D.R. "]
+	}
+},
+
+mem_head, score= {pts:0,lvl:2}, snake, food, playing, dir,
+
+
+resetSnake= _=>{
+
+	let lim= 4;
+	snake= { head: 4*config.map_w + lim-1, list:[] };
+	for( let i= 1; i<lim; i++ ){ snake.list.push( 4*config.map_w + lim-i-1 ); }
+},
+
+
+draw_all= (x, y)=>{
+
+	// food :
+	ctx.fillStyle= '#f80';
+	ctx.fillRect(x*config.zoom, y*config.zoom, config.zoom, config.zoom);
+	ctx.fillStyle= '#630';
+	ctx.fillRect(x*config.zoom+2, y*config.zoom+2, config.zoom-4, config.zoom-4);
+	// snake :
+	ctx.fillStyle= '#050';
+	ctx.fillRect((snake.head%config.map_w)*config.zoom, (snake.head/config.map_w|0)*config.zoom, config.zoom, config.zoom);
+	ctx.strokeStyle= '#444';
+	ctx.strokeRect((snake.head%config.map_w)*config.zoom, (snake.head/config.map_w|0)*config.zoom, config.zoom, config.zoom);
+	for( let i= 0; i < snake.list.length; i++ ){
+		ctx.fillStyle= '#600';
+		ctx.fillRect((snake.list[i]%config.map_w)*config.zoom, (snake.list[i]/config.map_w|0)*config.zoom, config.zoom, config.zoom);
+		ctx.strokeStyle= '#800';
+		ctx.strokeRect((snake.list[i]%config.map_w)*config.zoom, (snake.list[i]/config.map_w|0)*config.zoom, config.zoom, config.zoom);
+	}
+	// score :
+	ctx.fillStyle= '#860';
+	ctx.fillText( get_score(), 12, 26);
+},
+
+
+get_score= _=> "Score lvl"+ score.lvl +": "+ score.pts,
+
+
+redraw= _=>{
+
+	ctx.clearRect(0, 0, w, h);
+
+	mem_head= snake.head;
+
+	if( is_overmap( false ) || snake.head<0 || (snake.head/config.map_w|0)>=config.map_h || check_without_head( snake.head ) ){
+		// dead
+		snake.head= mem_head;
+		draw_all( food%config.map_w, food/config.map_w|0 );
+		config.diffic==0 ||( retry_screen() );
+	}else{
+		// move or along
+		if( snake.head==food ){
+			score.pts++;
+			moveFood();
+		}else{
+			snake.list.pop(); // cut snake
+		}
+		snake.list.unshift( mem_head );
+
+		draw_all( food%config.map_w, food/config.map_w|0 );
+	}	
+},
+
+
+is_overmap= overmap=>{
+
+	dir.length>1 &&( dir.shift() );
+	switch( dir[0] ){
+		case 'right':
+			overmap= ( (snake.head+1)/config.map_w|0 )!=( snake.head/config.map_w|0 );
+			snake.head++;
+		break;
+		case 'left':
+			overmap= ( (snake.head-1)/config.map_w|0 )!=( snake.head/config.map_w|0 );
+			snake.head--;
+		break;
+		case 'up':
+			snake.head-= config.map_w;
+		break;
+		case 'down':
+			snake.head+= config.map_w;
+		break;
+	}
+	return overmap;
+},
+
+
+check_without_head= pos=> snake.list.some( v2=> v2==pos ),
+
+
+moveFood= _=>{
+
+	// random pos
+	food= Math.random() *config.map_w *config.map_h |0;
+	// food on snake? better_pos()
+	( snake.head==food || check_without_head(food) ) &&( food= better_move_food() );
+},
+
+
+// random of free tile
+better_move_food= _=> ( arr_free=> arr_free[ Math.random()*arr_free.length|0 ] )(
+	[...Array(config.map_w*config.map_h)]
+	.map( (vv,kk)=> snake.head==kk||snake.list.some( v2=> v2==kk )? null: kk )
+	.filter( vv=> vv!=null )
+),
+
+
+retry= _=>{
+
+	dir= ['right'];
+	resetSnake();
+	playing= 1;
+	score.lvl= config.diffic;
+	score.pts= 0;
+	moveFood();
+	config.diffic>0 &&( gameloop= setInterval( redraw, 35+(config.diffic==1?400:config.diffic==2?90:0) ) );
+},
+
+
+
+retry_screen= _=>{
+
+	playing= 0;
+	gameloop &&( clearInterval(gameloop) );
+	ctx.clearRect(0, 0, w, h);
+	ctx.fillStyle= '#860';
+	ctx.fillText(get_score(),w*.415,h*.45);
+	ctx.fillText("< "+ config.diffic +": "+ lang.en.diffic[config.diffic] +" >",w*.415,h*.52);
+	ctx.fillText("Press spacebar to play",w*.38,h*.59);
+},
+
+
+
+g_key= {
+
+keys: {
+37:{ y:"left", n:"right"},
+38:{ y:"up",   n:"down" },
+39:{ y:"right",n:"left" },
+40:{ y:"down", n:"up"   },
+},
+
+f: key=>{ // if not inverse, execute key, if same : +1 frame.
+	if( !playing ){
+		if( key==39 ){ config.diffic= (config.diffic+1)%4; retry_screen(); }
+		if( key==37 ){ config.diffic= (config.diffic+3)%4; retry_screen(); }
+		return;
+	}
+	dir[dir.length-1]==g_key.keys[key].n ||(
+		dir[dir.length-1]==g_key.keys[key].y? redraw(): ( dir.push( g_key.keys[key].y ), config.diffic==0 &&( redraw() ) ) );
+},
+},
+
+
+
+init= _=>{
+
+	html_cv= document.querySelector('canvas');
+	ctx= html_cv.getContext('2d');
+
+	w= config.map_w*config.zoom;
+	h= config.map_h*config.zoom;
+	html_cv.width= w;
+	html_cv.height= h;
+
+	ctx.font= "19px sans-serif";
+	retry_screen();
+
+	window.addEventListener("keydown", b=>{
+		b.which==32?( playing ||( setTimeout(redraw,30), retry() ) ):
+		b.which==37?g_key.f( 37 ):
+		b.which==39?g_key.f( 39 ):
+		b.which==38?g_key.f( 38 ):
+		b.which==40?g_key.f( 40 ):
+	0},0);
+};
+
+window.addEventListener("load",init,false);
+
+</script>
+</head><body>
+<a class="bt_home" href="index.html">Accueil</a>
+<canvas></canvas>
+</body></html>
