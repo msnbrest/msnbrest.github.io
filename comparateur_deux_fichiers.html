@@ -1,0 +1,123 @@
+<!DOCTYPE html><html lang="fr"><head><title>Comparateur deux fichiers</title><meta charset="UTF-8">
+<link rel="icon" type="image/x-icon" sizes="128x128" href="favicon-128.ico">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="nanocss.css">
+<script src="nanojs.js"></script>
+<script src="kpdecker_jsdiff_all.js"></script>
+<style>
+#infos_0.hover, #infos_1.hover{ background: #290; }
+c-1{color:#f44;background:#510d;padding:.1em .2em;}
+c0{padding:.1em .2em;}
+c1{color:#4d4;background:#031b;padding:.1em .2em;}
+c2{color:#f99;background:#5102;padding:.1em .2em;}
+c3{}/*no common semi-similaire*/
+c4{color:#9d9;background:#0312;padding:.1em .2em;}
+
+textarea {
+border: 1px solid #fff4;
+color: #aaa;
+background: #222;
+width: 100%;
+padding: 2px 4px;
+border-radius:.5em;
+}
+</style>
+<script>
+
+// Thanks https://code-boxx.com/simple-drag-and-drop-file-upload/#sec-download
+// Thanks https://github.com/kpdecker/jsdiff
+
+let date= new Date(),
+
+// eviter 50 lignes pareil (n'afficher que 3 max dessus-dessous
+
+reader= new FileReader(),
+
+to2= vv=> vv<10? "0"+vv: ""+vv,
+
+ex0= `debut1\nune ligne pareil\net elle aussi\n parfois avec\n     espaces\net enfin\non termine avec\nrien`,
+
+ex1= `debut2\nune ligne pareil\net elle aussi\nparfois avec\nespaces\net enfin\non termine avec\nautre chose`,
+
+exemple= _=>{ let sure= confirm("afficher un exemple?"); if(!sure){ return; } _sel("#infos_0").value= ex0; _sel("#infos_1").value= ex1; compar(); },
+
+compar= _=>{ // by button
+
+	_sel("#result").innerHTML= diff.toDMP_whites( diff.go(
+		_sel("#infos_0").value.replace(/</g,"&#60;"),
+		_sel("#infos_1").value.replace(/</g,"&#60;")
+	) );
+},
+
+dragover= e=>{ e.preventDefault();   e.stopPropagation();   e.target.classList.add('hover'); },
+
+dragleave= e=>{ e.preventDefault();   e.stopPropagation();   e.target.classList.remove('hover'); },
+
+// lacher fichier dans case
+drop= e=>{ e.preventDefault();   e.stopPropagation();   e.target.classList.remove('hover');
+	(( ff, tt, rr )=>{ ff.length>0 &&( rr.onload= ee=>{ tt.value= ee.target.result; }, rr.readAsText(ff[0]) ); })( e.dataTransfer.files, e.target, reader );
+},
+
+download= _=>{
+
+	let a= document.createElement("a"),
+		url= URL.createObjectURL( new Blob([ _sel("#result").innerHTML ]) );
+	a.href= url;
+	a.download= "fichier_" + date.getFullYear() + to2(date.getMonth() + 1) + to2(date.getDate()) + ".txt"; //afaire extention selon fichier chargé
+	a.click();
+	window.URL.revokeObjectURL(url);
+},
+
+init= _=>{
+
+	if (window.File && window.FileReader && window.FileList && window.Blob) {
+		_sel("#infos_0").addEventListener("dragover", dragover, 0);
+		_sel("#infos_0").addEventListener("dragleave", dragleave, 0);
+		_sel("#infos_0").addEventListener("drop", drop, 0);
+		_sel("#infos_1").addEventListener("dragover", dragover, 0);
+		_sel("#infos_1").addEventListener("dragleave", dragleave, 0);
+		_sel("#infos_1").addEventListener("drop", drop, 0);
+	}else{
+		alert("Drag and Drop impossible avec ce navigateur");
+	}
+
+	if (typeof window.FileReader !== 'function') {
+		alert("The file API isn't supported on this browser yet.");
+	}
+
+};
+
+window.addEventListener("load", init, 0);
+
+</script>
+</head><body class="darkmode mh100vh flex flex_column flex_between">
+
+<header class="borb1_666 mb04 back222 py08">
+	<ul class="flex flex_spaced">
+		<li class="my08"><a class="tag btn big jaune" href="index.html">Accueil</a></li>
+	</ul>
+</header>
+
+<main class="back222 br12 w90p mxa mxw1200px py20 px20 my08">
+
+<div class="table back2a2a2a pd02 cdc0">anciene version</div>
+<textarea id="infos_0" data-index="0" class="mh20vh mb04">glisser ici un premier fichier texte</textarea>
+<div class="table back2a2a2a pd02 cdc0">nouvelle version</div>
+<textarea id="infos_1" data-index="1" class="mh20vh">glisser ici une autre version</textarea>
+<div class="py08">
+	<div id="extra_menu" class="flex flex_wrap">
+		<div class="btn tag mr2" onclick="compar()">comparer</div>
+		<!--<div class="btn tag mr2" onclick="download()">telecharger resultat moche</div>-->
+		<div class="btn tag mr2" onclick="exemple()">un exemple</div>
+	</div>
+</div>
+<div class="table back2a2a2a pd02 cdc0">Diff :</div>
+<pre id="result" style="line-height:1.4em;">(resultat)</pre>
+
+</main>
+
+<footer class="bort1_666 back222 px08 py08">
+	todo
+</footer>
+
+</body></html>

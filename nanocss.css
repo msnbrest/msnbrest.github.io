@@ -19,6 +19,8 @@ div{position:relative}
 
 body, ul, pre{margin:0}
 
+pre{white-space:pre-wrap}
+
 ul{padding:0;list-style:none}
 
 body.darkmode{background-color:#000;color:#ccc}
@@ -52,6 +54,7 @@ table tr td:nth-child(1){padding-right:2rem}
 .w10p{width:10%}
 .mxw1200px{max-width:1200px}
 .mh100vh{min-height:100vh}
+.mh20vh{min-height:20vh}
 .w80px{width:80px}
 .w200px{width:200px}
 
@@ -71,6 +74,7 @@ table tr td:nth-child(1){padding-right:2rem}
 .mb10{margin-bottom:1rem}
 .mb20{margin-bottom:2rem}
 
+.pd02{padding:.2em}
 .px08{padding-left:.8rem;padding-right:.8rem;}
 .px12{padding-left:1.2rem;padding-right:1.2rem;}
 .px20{padding-left:2rem;padding-right:2rem;}
@@ -86,6 +90,7 @@ table tr td:nth-child(1){padding-right:2rem}
 .c999{color:#999}
 .caaa{color:#aaa}
 .cc36{color:#c36}
+.cdc0{color:#dc0}
 
 .fs11{font-size:11pt;}
 
