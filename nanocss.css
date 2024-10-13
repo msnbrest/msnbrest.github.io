@@ -49,6 +49,7 @@ table tr td:nth-child(1){padding-right:2rem}
 
 .w100p{width:100%}
 .w90p{width:90%}
+.w10p{width:10%}
 .mxw1200px{max-width:1200px}
 .mh100vh{min-height:100vh}
 .w80px{width:80px}
@@ -59,6 +60,8 @@ table tr td:nth-child(1){padding-right:2rem}
 .mxa{margin-left:auto;margin-right:auto;}
 .my08{margin-top:.8rem;margin-bottom:.8rem;}
 
+.mr2{margin-right:.2em;}
+.mt40{margin-top:4rem}
 .mt32{margin-top:3.2rem}
 .mt20{margin-top:2rem}
 .mt12{margin-top:1.2rem}
@@ -83,6 +86,8 @@ table tr td:nth-child(1){padding-right:2rem}
 .c999{color:#999}
 .caaa{color:#aaa}
 .cc36{color:#c36}
+
+.fs11{font-size:11pt;}
 
 .bor0{border:0}
 .br9{border-radius:9px}
