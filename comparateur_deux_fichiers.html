@@ -6,12 +6,13 @@
 <script src="kpdecker_jsdiff_all.js"></script>
 <style>
 #infos_0.hover, #infos_1.hover{ background: #290; }
-c-1{color:#f44;background:#510d;padding:.1em .2em;}
-c0{padding:.1em .2em;}
-c1{color:#4d4;background:#031b;padding:.1em .2em;}
-c2{color:#f99;background:#5102;padding:.1em .2em;}
+c-1{position:relative;color:#f44;background:#510d;padding:.1em .2em;}
+c0{position:relative;padding:.1em .2em;}
+c1{position:relative;color:#4d4;background:#031b;padding:.1em .2em;}
+c2{position:relative;color:#f99;background:#5102;padding:.1em .2em;}
 c3{}/*no common semi-similaire*/
-c4{color:#9d9;background:#0312;padding:.1em .2em;}
+c4{position:relative;color:#9d9;background:#0312;padding:.1em .2em;}
+pr{position:absolute;left:-3.4em;width:3.2em;text-align:right;}
 
 textarea {
 border: 1px solid #fff4;
@@ -20,6 +21,9 @@ background: #222;
 width: 100%;
 padding: 2px 4px;
 border-radius:.5em;
+}
+#result{
+margin-left:2em;
 }
 </style>
 <script>
@@ -35,9 +39,9 @@ reader= new FileReader(),
 
 to2= vv=> vv<10? "0"+vv: ""+vv,
 
-ex0= `debut1\nune ligne pareil\net elle aussi\n parfois avec\n     espaces\net enfin\non termine avec\nrien`,
+ex0= `debut1\nune ligne pareil\net elle aussi\net elle aussi\net elle aussi\net elle aussi\net elle aussi\net elle aussi\net elle aussi\net elle aussi\net elle aussi\net elle aussi\net elle aussi\n parfois avec\n     espaces\net enfin\non termine avec\nrien`,
 
-ex1= `debut2\nune ligne pareil\net elle aussi\nparfois avec\nespaces\net enfin\non termine avec\nautre chose`,
+ex1= `debut2\nune ligne pareil\net elle aussi\net elle aussi\net elle aussi\net elle aussi\net elle aussi\net elle aussi\net elle aussi\net elle aussi\net elle aussi\net elle aussi\net elle aussi\nparfois avec\nespaces\net enfin\non termine avec\nautre chose`,
 
 exemple= _=>{ let sure= confirm("afficher un exemple?"); if(!sure){ return; } _sel("#infos_0").value= ex0; _sel("#infos_1").value= ex1; compar(); },
 
@@ -46,7 +50,7 @@ compar= _=>{ // by button
 	_sel("#result").innerHTML= diff.toDMP_whites( diff.go(
 		_sel("#infos_0").value.replace(/</g,"&#60;"),
 		_sel("#infos_1").value.replace(/</g,"&#60;")
-	) );
+	), +_sel("#lignes_autour").value );
 },
 
 dragover= e=>{ e.preventDefault();   e.stopPropagation();   e.target.classList.add('hover'); },
@@ -109,6 +113,7 @@ window.addEventListener("load", init, 0);
 		<div class="btn tag mr2" onclick="compar()">comparer</div>
 		<!--<div class="btn tag mr2" onclick="download()">telecharger resultat moche</div>-->
 		<div class="btn tag mr2" onclick="exemple()">un exemple</div>
+		<div class="mr2"><input type="number" id="lignes_autour" min="-1" max="20" style="filter:invert(1);width:4em;" value="2">Lignes similaire visible (ou -1 pour afficher tout)</div>
 	</div>
 </div>
 <div class="table back2a2a2a pd02 cdc0">Diff :</div>

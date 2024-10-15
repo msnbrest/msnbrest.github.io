@@ -114,14 +114,22 @@ const diff= {
 		return arr;
 	},
 
-	toDMP_whites: arr=>{ // change "patch" to css transparency
+	dmp_max_lines: ( str, spc )=>{
+
+		let lines= str.split("\n");
+		if( lines.length < spc*2+1 ){ return str; }
+		lines.splice( spc, lines.length-1-spc*2, "..." );
+		return lines.join("\n");
+	},
+
+	toDMP_whites: (arr,simi)=>{ // change "patch" to css transparency, with max similar lines between diffs lines
 
 		let mem= {patch:0};
 		arr.forEach( vv=>{
 			if( mem.patch<0 && vv.patch>0 && mem.value.split("\n").map(v2=>v2.replace(/^ +| +$/,"")).join("") == vv.value.split("\n").map(v2=>v2.replace(/^ +| +$/,"")).join("") ){   vv.patch+= 3;   mem.patch+= 3;   }
 			mem= vv;
 		});
-		return arr.map( u=> `<c${ u.patch }>${u.ligne}: ${u.value}</c${ u.patch }>` ).join(""); // by util/dmp.js
+		return arr.map( u=> `<div><pr class='${ u.patch==-1||u.patch==2? "c999": "cdc0" }' title='${ u.patch==-1||u.patch==2? "old": "new" }'>${u.ligne}</pr><c${ u.patch }>${ u.patch==0&&simi!=-1? diff.dmp_max_lines(u.value,simi): u.value }</c${ u.patch }></div>` ).join(""); // by util/dmp.js
 	}
 };
 
