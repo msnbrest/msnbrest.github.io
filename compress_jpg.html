@@ -23,7 +23,7 @@ button{padding:.3em .5em;font-size:.9em;}
 
 
 // tiens c'est marrant, ça fait "divversion"
-let div_version= ( qual, dl_id, ptr_file, canva )=>{
+let div_version= ( dl_id, ptr_file, canva )=>{
 
 	let len= bdd.ready_to_dl[dl_id].result.length;
 	let div1= document.createElement("div");
@@ -36,7 +36,7 @@ let div_version= ( qual, dl_id, ptr_file, canva )=>{
 	let span1= document.createElement("span");
 	span1.classList= "tag btn";
 	span1.onclick= event=> go_dl(dl_id);
-	span1.innerHTML= `Quality: ${qual}%, Bytes: ${ len*0.00075|0 }Ko (=${ (len*0.75/ptr_file.size*100).toFixed(1) }%), Dim:${ canva.width }x${ canva.height }</span>`;
+	span1.innerHTML= `Bytes: ${ conv_milliers((len*0.75|0)+"") }o (=${ (len*0.75/ptr_file.size*100).toFixed(1) }%), Dim:${ canva.width }x${ canva.height }</span>`;
 	div2.appendChild(span1);
 	let div3= document.createElement("div");
 	div3.id= "ladl"+ dl_id;
@@ -49,11 +49,15 @@ let div_version= ( qual, dl_id, ptr_file, canva )=>{
 
 
 
+conv_milliers= val=> (""+val).replace(/\B(?=(\d{3})+\b)/g, "'"),
+
+
+
 init= _=>{
 
-	_sel("#pc_width").onkeyup= event=>{   if( event.keyCode!=13 ){   return;   }   pc_width_13();   };
-	_sel("#filter_quality").onkeyup= event=>{   event.keyCode==13 &&( filter_to_image("quality") );   };
-	_sel("#filter_blur").onkeyup= event=>{   event.keyCode==13 &&( filter_to_image("blur") );   };
+	_sel("#pc_width").onkeyup= event=>{   pc_width_13();   };
+	_sel("#filter_quality").onkeyup= event=>{   filter_to_image("quality");   };
+	_sel("#filter_blur").onkeyup= event=>{   filter_to_image("blur");   };
 
 	const dropArea = _sel(".glisser");
 
@@ -63,6 +67,14 @@ init= _=>{
 
 	trt.canv= new_canvas();
 	_sel("#div_2_temporaire").append(trt.canv.c);
+},
+
+
+
+ready_to_draw= {
+	is_init: null,
+	ptr_file: null,
+	ind: null
 },
 
 
@@ -127,17 +139,11 @@ insert_file: file=>{
 
 recalc: ( init, ind )=>{
 
-	if( bdd.imported_files.length<1 || ind>=bdd.imported_files.length ){   return;   } // TODO ajouter erreur "désolé aucun fichier disponible" !
+	if( bdd.imported_files.length<1 || ind>=bdd.imported_files.length ){   alert("désolé aucun fichier disponible");   return;   }
 
-	let ptr_file= bdd.imported_files[ind];
-	if( init ){   bdd.global_ind_file= ind;   }
-	const reader = new FileReader();
-
-	reader.addEventListener('load', event=>reader_tr( init, event.target.result, ptr_file ) );
-
-	ptr_file.size= ptr_file.file.size;
-	ptr_file.name= ptr_file.file.name.match(/(.*)\.([^\.]+)$/).slice(1) || [ptr_file.file.name,""]; // soit le titre+ext soit le titre complet au cas où.
-	reader.readAsDataURL( ptr_file.file );
+	ready_to_draw.ptr_file= bdd.imported_files[ind];
+	ready_to_draw.is_init= init;
+	ready_to_draw.ind= ind;
 },
 
 go: balise=>{
@@ -146,6 +152,24 @@ go: balise=>{
 	_sel(".glisser").classList.remove("tag");
 	for( const file of balise.files ){   trt.insert_file(file);   }
 }
+},
+
+
+
+bt_go= _=>{
+
+	_sel("#div_versions").innerHTML= "";
+	ptr_file= ready_to_draw.ptr_file;
+	is_init= ready_to_draw.is_init;
+	ind= ready_to_draw.ind;
+	if( is_init ){   bdd.global_ind_file= ind;   }
+	const reader = new FileReader();
+
+	reader.addEventListener('load', event=>reader_tr( is_init, event.target.result, ptr_file ) );
+
+	ptr_file.size= ptr_file.file.size;
+	ptr_file.name= ptr_file.file.name.match(/(.*)\.([^\.]+)$/).slice(1) || [ptr_file.file.name,""]; // soit le titre+ext soit le titre complet au cas où.
+	reader.readAsDataURL( ptr_file.file );
 },
 
 
@@ -221,7 +245,7 @@ add_client_result= ( qual, w, h, ptr_file, result )=>{
 	let dl_id= bdd.ready_to_dl.length;
 	bdd.ready_to_dl.push({ ptr_file: ptr_file, result: result.toDataURL('image/jpeg', qual*0.01), qual: qual });
 
-	let la= div_version( qual, dl_id, ptr_file, result );
+	let la= div_version( dl_id, ptr_file, result );
 	la.style.height= (h / (w / _sel("#div_versions").clientWidth)) + "px";
 	la.setAttribute("data-width",w);
 	la.setAttribute("data-height",h);
@@ -229,7 +253,6 @@ add_client_result= ( qual, w, h, ptr_file, result )=>{
 	la.onmousemove= event=> moved(event);
 	la.onmouseout= event=>{ event.target.style.backgroundSize="contain"; event.target.style.backgroundPosition="0 0"; };
 
-	_sel("#div_versions").innerHTML= "";
 	_sel("#div_versions").appendChild( la );
 },
 
@@ -298,7 +321,7 @@ window.addEventListener("load",init,false);
 
 
 
-<div class="flex mb20 contour1" style="display:none;">
+<div class="flex mb20 contour1 hide">
 
 <div class="cadre">
 	<div class="tac">Importé :</div>
@@ -325,24 +348,25 @@ window.addEventListener("load",init,false);
 <div class="flex"><div>Ajoutés: </div><div class="flex flex_wrap" id="choix_files"></div></div>
 
 <div id="configs">
-Blur: <input class="invinv" type="number" id="filter_blur" onclick="this.select()"><br>
+Blur: <input class="invinv" type="number" value="0" id="filter_blur" onclick="this.select()"><br>
 Size: <input class="invinv" type="number" id="pc_width" onclick="this.select()"> (ori=<span id="ori_size"></span>) | 
 <button class="invinv" onclick="pc_width_is_1920px()">w= 1920px</button>
 <button class="invinv" onclick="pc_width_is_xxpc()">w= xx%</button>
 <button class="invinv" onclick="pc_width_is_50pc()">w= 50%</button>
 <button class="invinv" onclick="pc_width_is_200pc()">w= 200%</button><br>
-Quality: <input class="invinv" type="number" id="filter_quality" onclick="this.select()">
+Quality: <input type="number" id="filter_quality" value="80" class="invinv" onclick="this.select()">
+<div id="redraw" class="table tag btn mt12" onclick="bt_go()">Go</div>
 </div>
 
 </div>
 
-<div id="div_versions" class="flex flex_wrap" style="width:50%"></div>
+<div id="div_versions" class="flex flex_wrap mh100vh" style="width:50%"></div>
 
 </div>
 
 
 
-<input style="display:none" id="ducro" type="file" onchange="file_by_input(event)">
+<input id="ducro" type="file" class="hide" onchange="file_by_input(event)">
 
 </main>
 
