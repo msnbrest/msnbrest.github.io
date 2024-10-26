@@ -25,20 +25,20 @@ button{padding:.3em .5em;font-size:.9em;}
 
 
 // tiens c'est marrant, ça fait "divversion"
-let div_version= ( dl_id, ptr_file, canva )=>{
+let div_version= ( dl_id, file_meta, canva )=>{
 
 	let len= bdd.ready_to_dl[dl_id].result.length;
 	let div1= document.createElement("div");
 	div1.classList= "cadre contour1 w100p";
 	let div4= document.createElement("div");
 	div4.classList="tag bc36";
-	div4.innerHTML= ptr_file.name.join(".");
+	div4.innerHTML= file_meta.name.join(".");
 	let div2= document.createElement("div");
 	div2.classList= "mb10";
 	let span1= document.createElement("span");
 	span1.classList= "tag btn";
 	span1.onclick= event=> go_dl(dl_id);
-	span1.innerHTML= `Bytes: ${ conv_milliers((len*0.75|0)+"") }o (=${ (len*0.75/ptr_file.size*100).toFixed(1) }%), Dim:${ canva.width }x${ canva.height }</span>`;
+	span1.innerHTML= `Bytes: ${ conv_milliers((len*0.75|0)+"") }o (=${ (len*0.75/file_meta.file.size*100).toFixed(1) }%), Dim:${ canva.width }x${ canva.height }</span>`;
 	div2.appendChild(span1);
 	let div3= document.createElement("div");
 	div3.id= "ladl"+ dl_id;
@@ -57,9 +57,11 @@ conv_milliers= val=> (""+val).replace(/\B(?=(\d{3})+\b)/g, "'"),
 
 init= _=>{
 
-	_sel("#pc_width").onkeyup= event=>{   set_pc_width();   };
-	_sel("#filter_quality").onkeyup= event=>{   filter_to_image("quality");   };
-	_sel("#filter_blur").onkeyup= event=>{   filter_to_image("blur");   };
+	s_to_h("quality");
+	s_to_h("blur");
+	_sel("#pc_width").onkeyup= event=>{   h_to_s("width");   };
+	_sel("#filter_quality").onkeyup= event=>{   h_to_s("quality");   };
+	_sel("#filter_blur").onkeyup= event=>{   h_to_s("blur");   };
 
 	const dropArea = _sel(".glisser");
 
@@ -74,27 +76,8 @@ init= _=>{
 
 
 ready_to_draw= {
-	ch_file: null,
-	ptr_file: null,
+	file_meta: null,
 	ind: null
-},
-
-
-
-set_pc_width= _=>{
-
-	if( bdd.selected==null ){ return; }
-	bdd.imported_files[ bdd.selected ].filters.size= +_sel("#pc_width").value;
-	trt.from_ind( false, bdd.selected );
-},
-
-
-
-filter_to_image= type=>{
-
-	if( bdd.selected==null ){ return; }
-	bdd.imported_files[ bdd.selected ].filters[type]= +_sel("#filter_"+type).value;
-	trt.from_ind( false, bdd.selected );
 },
 
 
@@ -117,11 +100,11 @@ file_by_drop= event=>{
 
 bdd= {
 
-	selected: null, // fichier actuellement en edition
-	// TODO on delete input file, alors si c'est le même que selected alors  bdd.selected=null
+	// TODO on delete input file, alors si c'est le même que selected alors  ready_to_draw.ind=null
 	imported_files: [], // liste de fichiers importés [{ file, }]
 	imported_files_lastind: -1,
 	ready_to_dl: [], // liste de fichiers créés
+	filters: { quality: 1, blur: 0 }
 },
 
 
@@ -137,29 +120,33 @@ insert_file: file=>{
 	if( !file.type ){ alert('Error: The File.type property does not appear to be supported on this browser.'); return; }
 	if( !file.type.match('image.*') ){ alert('Error: The selected file does not appear to be an image.'); return; }
 
-	trt.import_file( bdd.imported_files.length<1, file );
+	trt.import_file( file );
 },
 
 
-from_ind: ( othfile, ind )=>{
+from_ind: ind=>{
 
 	if( bdd.imported_files.length<1 || ind>=bdd.imported_files.length ){   alert("désolé fichier hors liste");   return;   }
 
-	ready_to_draw.ptr_file= bdd.imported_files[ind];
-	ready_to_draw.ch_file= othfile;
+	ready_to_draw.file_meta= bdd.imported_files[ind];
 	ready_to_draw.ind= ind;
+
 	for( const elem of _sels(".icon99") ){ elem.classList.remove("iconselected"); }
 	_sel(".icon99[data-ind='"+ ind +"']").classList.add("iconselected");
+
+	bdd.filters["width"]= ready_to_draw.file_meta.image.width;
+	s_to_h( "width" );
 },
 
 
-import_file: ( was_empty, file )=>{
+import_file: ( file )=>{
 
-	bdd.imported_files.push({ file:file, image:null, name:null, size:null, filters:{} }); // liste des infos fichier et filtres
+	bdd.imported_files.push({ file:file, image:null, name:null }); // liste des infos fichier et filtres
 	bdd.imported_files_lastind++;
+	const tmp_lastind= bdd.imported_files_lastind;
 
 	const reader = new FileReader();
-	reader.addEventListener('load', event=> reader_tr( event.target.result, bdd.imported_files_lastind, was_empty ) );
+	reader.addEventListener('load', event=> reader_tr( event.target.result, tmp_lastind ) );
 	reader.readAsDataURL( file );
 },
 
@@ -175,54 +162,42 @@ go: balise=>{
 
 
 
+reader_tr= ( result, ind )=>{
+
+	bdd.imported_files[ind].image= new Image();
+
+	bdd.imported_files[ind].image.onload= osef=>{
+		_sel("#choix_files").innerHTML+= div_icon( ind, result, bdd.imported_files[ind].image );
+		if( ind==0 ){
+			trt.from_ind( +_sel("#choix_files").firstChild.getAttribute("data-ind") );
+			_sel("#help") &&( _sel("#help").parentElement.classList.remove("contour1"), _sel("#help").remove() );
+		}
+	};
+
+	bdd.imported_files[ind].image.src= result;
+
+	bdd.imported_files[ind].name= bdd.imported_files[ind].file.name.match(/(.*)\.([^\.]+)$/).slice(1) || [bdd.imported_files[ind].file.name,""]; // titre+ext ou titre complet.
+},
+
+
+
+div_icon= ( ind, result, img )=> `<div class="tag btn mr2 icon99" data-ind="${ind}" onclick="trt.from_ind(${ind});" style="background:url('${result}')  no-repeat center center/cover">${ img.width+" x "+img.height }</div>`,
+
+
+
 bt_go= _=>{
 
 	_sel("#div_compressed").innerHTML= "";
-	ptr_file= ready_to_draw.ptr_file;
-	ch_file= ready_to_draw.ch_file;
-	ind= ready_to_draw.ind;
-	if( ch_file ){   bdd.selected= ind;   }
-
-	ptr_file.size= ptr_file.file.size;
-	ptr_file.name= ptr_file.file.name.match(/(.*)\.([^\.]+)$/).slice(1) || [ptr_file.file.name,""]; // soit le titre+ext soit le titre complet au cas où.
-
-	calculate_img( ch_file, ptr_file );
-},
-
-
-
-reader_tr= ( result, ind, was_empty )=>{
-
-	bdd.imported_files[ind].image= new Image();
-	bdd.imported_files[ind].image.src= result;
-	_sel("#choix_files").innerHTML+= `<div class="tag btn mr2 icon99" data-ind="${ind}" onclick="trt.from_ind(true,${ind});" style="background:url('${result}')  no-repeat center center/cover"></div>`;
-	if( was_empty ){
-		trt.from_ind(true,0);
-		_sel("#help") &&( _sel("#help").parentElement.classList.remove("contour1"), _sel("#help").remove() );
-	}
-},
-
-
-
-calculate_img= ( ch_file, ptr_file )=>{
-
-	alert("continuer");return;trt.rf_ti= saveds[ind];
-	if( ch_file ){
-		ptr_file.filters["size"]= trt.rf_ti.width;
-		ptr_file.filters["quality"]= 80;
-		_sel("#ori_size").innerHTML= ptr_file.filters.size;
-		_sel("#pc_width").value= ptr_file.filters.size;
-	}
-
+	trt.rf_ti= bdd.imported_files[ready_to_draw.ind].image;
 	trt.rf_c1= new_canvas(); // canvas 1) pour filtres
 	trt.rf_c1.c.width= trt.rf_ti.width;
 	trt.rf_c1.c.height= trt.rf_ti.height;
-	// TODO ajout de filtres blur ou contrast
-	ptr_file.filters.blur &&( trt.rf_c1.d.filter= "blur("+ ptr_file.filters.blur +"px)" );
+	// todo ajout de filtres contrast
+	bdd.filters.blur &&( trt.rf_c1.d.filter= "blur("+ bdd.filters.blur +"px)" );
 	trt.rf_c1.d.drawImage( trt.rf_ti, 0, 0, trt.rf_ti.width, trt.rf_ti.height, 0, 0, trt.rf_ti.width, trt.rf_ti.height );
 
 	let o_gt= trt.rf_ti.width < trt.rf_ti.height ? trt.rf_ti.height : trt.rf_ti.width;
-	let leratio= ( ptr_file.filters.size / trt.rf_c1.c.width )+.000001;
+	let leratio= ( bdd.filters.width / trt.rf_c1.c.width )+.000001;
 
 	var img0= new Image();
 	img0.src= trt.rf_c1.c.toDataURL();
@@ -234,8 +209,35 @@ calculate_img= ( ch_file, ptr_file )=>{
 
 		trt.canv.d.drawImage( img0, 0, 0, img0.width, img0.height, 0, 0, img0.width * leratio |0, img0.height * leratio |0 );
 
-		add_client_result( ptr_file.filters.quality, trt.rf_ti.width, trt.rf_ti.height, ptr_file, trt.canv.c );
+		add_client_result( bdd.filters.quality, trt.rf_ti.width, trt.rf_ti.height, ready_to_draw.file_meta, trt.canv.c );
 	}
+},
+
+
+
+qui_de_quoi={
+	"width": "#pc_width",
+	"quality": "#filter_quality",
+	"blur": "#filter_blur"
+},
+
+
+
+h_to_s= quoi=>{
+
+	if( !(quoi in qui_de_quoi) ){ return; }
+
+	bdd.filters[quoi]= +_sel( qui_de_quoi[quoi] ).value;
+	s_to_h(quoi);
+},
+
+
+
+s_to_h= quoi=>{
+
+	if( !(quoi in qui_de_quoi) ){ return; }
+	
+	_sel( qui_de_quoi[quoi] ).value= bdd.filters[quoi];
 },
 
 
@@ -259,12 +261,12 @@ moved= event=>{
 
 
 
-add_client_result= ( qual, w, h, ptr_file, result )=>{
+add_client_result= ( qual, w, h, file_meta, result )=>{
 
 	let dl_id= bdd.ready_to_dl.length;
-	bdd.ready_to_dl.push({ ptr_file: ptr_file, result: result.toDataURL('image/jpeg', qual*0.01), qual: qual });
+	bdd.ready_to_dl.push({ file_meta: file_meta, result: result.toDataURL('image/jpeg', qual*0.01), qual: qual });
 
-	let la= div_version( dl_id, ptr_file, result );
+	let la= div_version( dl_id, file_meta, result );
 	la.style.height= (h / (w / _sel("#div_compressed").clientWidth)) + "px";
 	la.setAttribute("data-width",w);
 	la.setAttribute("data-height",h);
@@ -280,21 +282,22 @@ add_client_result= ( qual, w, h, ptr_file, result )=>{
 titre_by_version= (tab_titre, version)=> tab_titre[0]+"_"+version+".jpg",
 
 
-pc_width_1920px= _=>{   _sel("#pc_width").value= 1920;   set_pc_width();   },
+pc_width_1920px= _=>{   _sel("#pc_width").value= 1920;   h_to_s("width");   },
 
 
 pc_width_xxpc= _=>{
+	if( bdd.imported_files.length<1 ){ return; }
 	let res= +prompt("quel pourcentage de l'original?",100);
 	if( !res || res<0 ){   return;   }
-	_sel("#pc_width").value= _sel("#ori_size").innerHTML*(res/100);
-	set_pc_width();
+	_sel("#pc_width").value= bdd.imported_files[ready_to_draw.ind].image.width*(res/100);
+	h_to_s("width");
 },
 
 
-pc_width_50pc= _=>{   _sel("#pc_width").value= _sel("#ori_size").innerHTML*.5;   set_pc_width();   },
+pc_width_50pc= _=>{   _sel("#pc_width").value= bdd.imported_files[ready_to_draw.ind].image.width*.5;   h_to_s("width");   },
 
 
-pc_width_200pc= _=>{   _sel("#pc_width").value= _sel("#ori_size").innerHTML*2;   set_pc_width();   },
+pc_width_200pc= _=>{   _sel("#pc_width").value= bdd.imported_files[ready_to_draw.ind].image.width*2;   h_to_s("width");   },
 
 
 
@@ -303,7 +306,7 @@ go_dl= dl_id=>{
 	var a = document.createElement("a");
 	let ptr_result= bdd.ready_to_dl[+dl_id];
 	a.href = ptr_result.result;
-	a.download = titre_by_version( ptr_result.ptr_file.name || ["download","jpg"], ptr_result.qual ); // format title + version + .jpg
+	a.download = titre_by_version( ptr_result.file_meta.name || ["download","jpg"], ptr_result.qual ); // format title + version + .jpg
 	document.body.appendChild(a);
 	a.click();
 	document.body.removeChild(a);
@@ -357,16 +360,14 @@ window.addEventListener("load",init,false);
 
 <div style="width:50%;">
 
-<div class="flex"><div>Ajoutés: </div><div class="flex flex_wrap" id="choix_files"></div></div>
+<div class="flex"><div class="flex flex_wrap" id="choix_files"></div></div>
 
 <div id="configs">
-Blur: <input class="invinv" type="number" value="0" id="filter_blur" onclick="this.select()"><br>
-Size: <input class="invinv" type="number" id="pc_width" onclick="this.select()"> (ori=<span id="ori_size"></span>) | 
-<button class="invinv" onclick="pc_width_1920px()">w= 1920px</button>
-<button class="invinv" onclick="pc_width_xxpc()">w= xx%</button>
-<button class="invinv" onclick="pc_width_50pc()">w= 50%</button>
-<button class="invinv" onclick="pc_width_200pc()">w= 200%</button><br>
-Quality: <input type="number" id="filter_quality" value="80" class="invinv" onclick="this.select()">
+Blur: <input class="invinv" type="number" id="filter_blur" onclick="this.select()"><br>
+Size: <input class="invinv" type="number" id="pc_width" onclick="this.select()">
+<div><button class="invinv" onclick="pc_width_1920px()">1920px</button>
+<button class="invinv" onclick="pc_width_xxpc()">xx%</button></div>
+Quality: <input type="number" id="filter_quality" class="invinv" onclick="this.select()">
 <div id="redraw" class="table tag btn mt12" onclick="bt_go()">Go</div>
 </div>
 
