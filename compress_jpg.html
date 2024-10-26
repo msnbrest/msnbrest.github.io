@@ -10,6 +10,8 @@
 .contour1{padding:1.2em .8em 1em 1.4em;box-shadow:4px 4px 16px 0 #111;border-radius:12px;}
 .fixed0{position:fixed;left:0;top:0;width:100%;z-index:2;}
 .invinv{filter:invert(1);}
+.icon99{width:9em;height:9em;}
+.iconselected{box-shadow:0 0 .8em .2em #dc0;}
 button{padding:.3em .5em;font-size:.9em;}
 </style>
 <script>
@@ -55,7 +57,7 @@ conv_milliers= val=> (""+val).replace(/\B(?=(\d{3})+\b)/g, "'"),
 
 init= _=>{
 
-	_sel("#pc_width").onkeyup= event=>{   pc_width_13();   };
+	_sel("#pc_width").onkeyup= event=>{   set_pc_width();   };
 	_sel("#filter_quality").onkeyup= event=>{   filter_to_image("quality");   };
 	_sel("#filter_blur").onkeyup= event=>{   filter_to_image("blur");   };
 
@@ -72,27 +74,27 @@ init= _=>{
 
 
 ready_to_draw= {
-	is_init: null,
+	ch_file: null,
 	ptr_file: null,
 	ind: null
 },
 
 
 
-pc_width_13= _=>{
+set_pc_width= _=>{
 
-	if( bdd.global_ind_file==null ){ return; }
-	bdd.imported_files[ bdd.global_ind_file ].filters.size= +_sel("#pc_width").value;
-	trt.recalc( false, bdd.global_ind_file );
+	if( bdd.selected==null ){ return; }
+	bdd.imported_files[ bdd.selected ].filters.size= +_sel("#pc_width").value;
+	trt.from_ind( false, bdd.selected );
 },
 
 
 
 filter_to_image= type=>{
 
-	if( bdd.global_ind_file==null ){ return; }
-	bdd.imported_files[ bdd.global_ind_file ].filters[type]= +_sel("#filter_"+type).value;
-	trt.recalc( false, bdd.global_ind_file );
+	if( bdd.selected==null ){ return; }
+	bdd.imported_files[ bdd.selected ].filters[type]= +_sel("#filter_"+type).value;
+	trt.from_ind( false, bdd.selected );
 },
 
 
@@ -115,9 +117,10 @@ file_by_drop= event=>{
 
 bdd= {
 
-	global_ind_file: null, // fichier actuellement en edition
-	// TODO on delete input file, alors si c'est le même que global_ind_file alors  bdd.global_ind_file=null
+	selected: null, // fichier actuellement en edition
+	// TODO on delete input file, alors si c'est le même que selected alors  bdd.selected=null
 	imported_files: [], // liste de fichiers importés [{ file, }]
+	imported_files_lastind: -1,
 	ready_to_dl: [], // liste de fichiers créés
 },
 
@@ -125,26 +128,41 @@ bdd= {
 
 trt= { // fonction de traitement
 
+
 canv: null, // canvas 2) redimentionnable vers images
+
 
 insert_file: file=>{
 
-	let was_empty= bdd.imported_files.length<1;
 	if( !file.type ){ alert('Error: The File.type property does not appear to be supported on this browser.'); return; }
 	if( !file.type.match('image.*') ){ alert('Error: The selected file does not appear to be an image.'); return; }
-	bdd.imported_files.push({ file:file, name:null, size:null, filters:{} }); // liste des infos fichier et filtres
-	_sel("#choix_files").innerHTML+= "<span class='tag btn mr2' onclick='trt.recalc(true,"+( bdd.imported_files.length-1 )+");'>[ "+( bdd.imported_files.length-1 )+" ]</span>";
-	if( was_empty ){   trt.recalc(true,0);   }
+
+	trt.import_file( bdd.imported_files.length<1, file );
 },
 
-recalc: ( init, ind )=>{
 
-	if( bdd.imported_files.length<1 || ind>=bdd.imported_files.length ){   alert("désolé aucun fichier disponible");   return;   }
+from_ind: ( othfile, ind )=>{
+
+	if( bdd.imported_files.length<1 || ind>=bdd.imported_files.length ){   alert("désolé fichier hors liste");   return;   }
 
 	ready_to_draw.ptr_file= bdd.imported_files[ind];
-	ready_to_draw.is_init= init;
+	ready_to_draw.ch_file= othfile;
 	ready_to_draw.ind= ind;
+	for( const elem of _sels(".icon99") ){ elem.classList.remove("iconselected"); }
+	_sel(".icon99[data-ind='"+ ind +"']").classList.add("iconselected");
 },
+
+
+import_file: ( was_empty, file )=>{
+
+	bdd.imported_files.push({ file:file, image:null, name:null, size:null, filters:{} }); // liste des infos fichier et filtres
+	bdd.imported_files_lastind++;
+
+	const reader = new FileReader();
+	reader.addEventListener('load', event=> reader_tr( event.target.result, bdd.imported_files_lastind, was_empty ) );
+	reader.readAsDataURL( file );
+},
+
 
 go: balise=>{
 
@@ -152,43 +170,44 @@ go: balise=>{
 	_sel(".glisser").classList.remove("tag");
 	for( const file of balise.files ){   trt.insert_file(file);   }
 }
+
 },
 
 
 
 bt_go= _=>{
 
-	_sel("#div_versions").innerHTML= "";
+	_sel("#div_compressed").innerHTML= "";
 	ptr_file= ready_to_draw.ptr_file;
-	is_init= ready_to_draw.is_init;
+	ch_file= ready_to_draw.ch_file;
 	ind= ready_to_draw.ind;
-	if( is_init ){   bdd.global_ind_file= ind;   }
-	const reader = new FileReader();
-
-	reader.addEventListener('load', event=>reader_tr( is_init, event.target.result, ptr_file ) );
+	if( ch_file ){   bdd.selected= ind;   }
 
 	ptr_file.size= ptr_file.file.size;
 	ptr_file.name= ptr_file.file.name.match(/(.*)\.([^\.]+)$/).slice(1) || [ptr_file.file.name,""]; // soit le titre+ext soit le titre complet au cas où.
-	reader.readAsDataURL( ptr_file.file );
+
+	calculate_img( ch_file, ptr_file );
 },
 
 
 
-reader_tr= ( is_init, result, ptr_file )=>{
+reader_tr= ( result, ind, was_empty )=>{
 
-	_sel("#div_1_importation").style.background= "url(" + result + ")  no-repeat center center/contain";
-
-	trt.rf_ti= new Image();
-	trt.rf_ti.src= result;
-
-	trt.rf_ti.onload= osef=> rf_ti_onload( osef, is_init, ptr_file );
+	bdd.imported_files[ind].image= new Image();
+	bdd.imported_files[ind].image.src= result;
+	_sel("#choix_files").innerHTML+= `<div class="tag btn mr2 icon99" data-ind="${ind}" onclick="trt.from_ind(true,${ind});" style="background:url('${result}')  no-repeat center center/cover"></div>`;
+	if( was_empty ){
+		trt.from_ind(true,0);
+		_sel("#help") &&( _sel("#help").parentElement.classList.remove("contour1"), _sel("#help").remove() );
+	}
 },
 
 
 
-rf_ti_onload= ( osef, is_init, ptr_file )=>{
+calculate_img= ( ch_file, ptr_file )=>{
 
-	if( is_init ){
+	alert("continuer");return;trt.rf_ti= saveds[ind];
+	if( ch_file ){
 		ptr_file.filters["size"]= trt.rf_ti.width;
 		ptr_file.filters["quality"]= 80;
 		_sel("#ori_size").innerHTML= ptr_file.filters.size;
@@ -246,14 +265,14 @@ add_client_result= ( qual, w, h, ptr_file, result )=>{
 	bdd.ready_to_dl.push({ ptr_file: ptr_file, result: result.toDataURL('image/jpeg', qual*0.01), qual: qual });
 
 	let la= div_version( dl_id, ptr_file, result );
-	la.style.height= (h / (w / _sel("#div_versions").clientWidth)) + "px";
+	la.style.height= (h / (w / _sel("#div_compressed").clientWidth)) + "px";
 	la.setAttribute("data-width",w);
 	la.setAttribute("data-height",h);
 	la.style.background= "url(" + bdd.ready_to_dl[dl_id].result + ")  no-repeat center center/contain";
 	la.onmousemove= event=> moved(event);
 	la.onmouseout= event=>{ event.target.style.backgroundSize="contain"; event.target.style.backgroundPosition="0 0"; };
 
-	_sel("#div_versions").appendChild( la );
+	_sel("#div_compressed").appendChild( la );
 },
 
 
@@ -261,21 +280,21 @@ add_client_result= ( qual, w, h, ptr_file, result )=>{
 titre_by_version= (tab_titre, version)=> tab_titre[0]+"_"+version+".jpg",
 
 
-pc_width_is_1920px= _=>{   _sel("#pc_width").value= 1920;   pc_width_13();   },
+pc_width_1920px= _=>{   _sel("#pc_width").value= 1920;   set_pc_width();   },
 
 
-pc_width_is_xxpc= _=>{
+pc_width_xxpc= _=>{
 	let res= +prompt("quel pourcentage de l'original?",100);
 	if( !res || res<0 ){   return;   }
 	_sel("#pc_width").value= _sel("#ori_size").innerHTML*(res/100);
-	pc_width_13();
+	set_pc_width();
 },
 
 
-pc_width_is_50pc= _=>{   _sel("#pc_width").value= _sel("#ori_size").innerHTML*.5;   pc_width_13();   },
+pc_width_50pc= _=>{   _sel("#pc_width").value= _sel("#ori_size").innerHTML*.5;   set_pc_width();   },
 
 
-pc_width_is_200pc= _=>{   _sel("#pc_width").value= _sel("#ori_size").innerHTML*2;   pc_width_13();   },
+pc_width_200pc= _=>{   _sel("#pc_width").value= _sel("#ori_size").innerHTML*2;   set_pc_width();   },
 
 
 
@@ -307,7 +326,7 @@ window.addEventListener("load",init,false);
 
 
 
-<div class="mb20 contour1">Compression de jpg, png, bmp... vers jpg qualité au choix.<br>Pour commencer, importez des fichiers, en haut de l'écran</div>
+<div class="mb20 contour1">Compression de jpg, png, bmp... vers jpg qualité au choix.<div id="help">Pour commencer, importez des fichiers, en haut de l'écran</div></div>
 
 
 
@@ -322,13 +341,6 @@ window.addEventListener("load",init,false);
 
 
 <div class="flex mb20 contour1 hide">
-
-<div class="cadre">
-	<div class="tac">Importé :</div>
-	<div class="flex flex_center">
-		<div id="div_1_importation" style="width:400px;height:400px;opacity:.75"></div>
-	</div>
-</div>
 
 <div class="cadre">
 	<div class="tac">traitement temporaire :</div>
@@ -350,17 +362,17 @@ window.addEventListener("load",init,false);
 <div id="configs">
 Blur: <input class="invinv" type="number" value="0" id="filter_blur" onclick="this.select()"><br>
 Size: <input class="invinv" type="number" id="pc_width" onclick="this.select()"> (ori=<span id="ori_size"></span>) | 
-<button class="invinv" onclick="pc_width_is_1920px()">w= 1920px</button>
-<button class="invinv" onclick="pc_width_is_xxpc()">w= xx%</button>
-<button class="invinv" onclick="pc_width_is_50pc()">w= 50%</button>
-<button class="invinv" onclick="pc_width_is_200pc()">w= 200%</button><br>
+<button class="invinv" onclick="pc_width_1920px()">w= 1920px</button>
+<button class="invinv" onclick="pc_width_xxpc()">w= xx%</button>
+<button class="invinv" onclick="pc_width_50pc()">w= 50%</button>
+<button class="invinv" onclick="pc_width_200pc()">w= 200%</button><br>
 Quality: <input type="number" id="filter_quality" value="80" class="invinv" onclick="this.select()">
 <div id="redraw" class="table tag btn mt12" onclick="bt_go()">Go</div>
 </div>
 
 </div>
 
-<div id="div_versions" class="flex flex_wrap mh100vh" style="width:50%"></div>
+<div id="div_compressed" class="flex flex_wrap mh100vh" style="width:50%"></div>
 
 </div>
 
