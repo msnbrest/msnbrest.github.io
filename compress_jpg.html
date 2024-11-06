@@ -25,7 +25,7 @@ button{padding:.3em .5em;font-size:.9em;}
 
 
 // tiens c'est marrant, ça fait "divversion"
-let div_version= ( dl_id, file_meta, canva )=>{
+let div_version= ( ext, dl_id, file_meta, canva )=>{
 
 	let len= bdd.ready_to_dl[dl_id].result.length;
 	let div1= document.createElement("div");
@@ -37,7 +37,7 @@ let div_version= ( dl_id, file_meta, canva )=>{
 	div2.classList= "mb10";
 	let span1= document.createElement("span");
 	span1.classList= "tag btn";
-	span1.onclick= event=> go_dl(dl_id);
+	span1.onclick= event=> go_dl(ext,dl_id);
 	span1.innerHTML= `Bytes: ${ conv_milliers((len*0.75|0)+"") }o (=${ (len*0.75/file_meta.file.size*100).toFixed(1) }%), Dim:${ canva.width }x${ canva.height }</span>`;
 	div2.appendChild(span1);
 	let div3= document.createElement("div");
@@ -104,7 +104,7 @@ bdd= {
 	imported_files: [], // liste de fichiers importés [{ file, }]
 	imported_files_lastind: -1,
 	ready_to_dl: [], // liste de fichiers créés
-	filters: { quality: 1, blur: 0 }
+	filters: { quality: 20, blur: 0 }
 },
 
 
@@ -185,7 +185,9 @@ div_icon= ( ind, result, img )=> `<div class="tag btn mr2 icon99" data-ind="${in
 
 
 
-bt_go= _=>{
+bt_preview= ext=>{
+
+	if( ext!="jpg" && ext!="webp" ){ return; }
 
 	_sel("#div_compressed").innerHTML= "";
 	trt.rf_ti= bdd.imported_files[ready_to_draw.ind].image;
@@ -209,7 +211,7 @@ bt_go= _=>{
 
 		trt.canv.d.drawImage( img0, 0, 0, img0.width, img0.height, 0, 0, img0.width * leratio |0, img0.height * leratio |0 );
 
-		add_client_result( bdd.filters.quality, trt.rf_ti.width, trt.rf_ti.height, ready_to_draw.file_meta, trt.canv.c );
+		add_client_result( ext, bdd.filters.quality, trt.rf_ti.width, trt.rf_ti.height, ready_to_draw.file_meta, trt.canv.c );
 	}
 },
 
@@ -261,12 +263,14 @@ moved= event=>{
 
 
 
-add_client_result= ( qual, w, h, file_meta, result )=>{
+add_client_result= ( ext, qual, w, h, file_meta, result )=>{
+
+	if( ext!="jpg" && ext!="webp" ){ return; }
 
 	let dl_id= bdd.ready_to_dl.length;
-	bdd.ready_to_dl.push({ file_meta: file_meta, result: result.toDataURL('image/jpeg', qual*0.01), qual: qual });
+	bdd.ready_to_dl.push({ file_meta: file_meta, result: result.toDataURL('image/'+(ext=="jpg"?"jpeg":"webp"), qual*0.01), qual: qual });
 
-	let la= div_version( dl_id, file_meta, result );
+	let la= div_version( ext, dl_id, file_meta, result );
 	la.style.height= (h / (w / _sel("#div_compressed").clientWidth)) + "px";
 	la.setAttribute("data-width",w);
 	la.setAttribute("data-height",h);
@@ -279,7 +283,7 @@ add_client_result= ( qual, w, h, file_meta, result )=>{
 
 
 
-titre_by_version= (tab_titre, version)=> tab_titre[0]+"_"+version+".jpg",
+titre_by_version= (ext,tab_titre, version)=> tab_titre[0]+"_"+version+"."+ext,
 
 
 pc_width_1920px= _=>{   _sel("#pc_width").value= 1920;   h_to_s("width");   },
@@ -301,12 +305,14 @@ pc_width_200pc= _=>{   _sel("#pc_width").value= bdd.imported_files[ready_to_draw
 
 
 
-go_dl= dl_id=>{
+go_dl= (ext,dl_id)=>{
+
+	if( ext!="jpg" && ext!="webp" ){ return; }
 
 	var a = document.createElement("a");
 	let ptr_result= bdd.ready_to_dl[+dl_id];
 	a.href = ptr_result.result;
-	a.download = titre_by_version( ptr_result.file_meta.name || ["download","jpg"], ptr_result.qual ); // format title + version + .jpg
+	a.download = titre_by_version( ext, ptr_result.file_meta.name || ["download",ext], ptr_result.qual ); // format title + version + .ext
 	document.body.appendChild(a);
 	a.click();
 	document.body.removeChild(a);
@@ -329,7 +335,7 @@ window.addEventListener("load",init,false);
 
 
 
-<div class="mb20 contour1">Compression de jpg, png, bmp... vers jpg qualité au choix.<div id="help">Pour commencer, importez des fichiers, en haut de l'écran</div></div>
+<div class="mb20 contour1">Compression de jpg, png, bmp, webp... vers jpg (ou webp) qualité au choix.<div id="help">Pour commencer, importez des fichiers, en haut de l'écran</div></div>
 
 
 
@@ -358,22 +364,26 @@ window.addEventListener("load",init,false);
 
 <div class="flex">
 
-<div style="width:50%;">
+<div style="width:35%;">
 
-<div class="flex"><div class="flex flex_wrap" id="choix_files"></div></div>
+	<div class="flex"><div class="flex flex_wrap" id="choix_files"></div></div>
 
-<div id="configs">
-Blur: <input class="invinv" type="number" id="filter_blur" onclick="this.select()"><br>
-Size: <input class="invinv" type="number" id="pc_width" onclick="this.select()">
-<div><button class="invinv" onclick="pc_width_1920px()">1920px</button>
-<button class="invinv" onclick="pc_width_xxpc()">xx%</button></div>
-Quality: <input type="number" id="filter_quality" class="invinv" onclick="this.select()">
-<div id="redraw" class="table tag btn mt12" onclick="bt_go()">Go</div>
+	<div id="configs">
+		<div class="mb04">Flou: <input class="invinv w80px" type="number" id="filter_blur" onclick="this.select()"></div>
+		<div class="mb04">Largeur: <input class="invinv w80px" type="number" id="pc_width" onclick="this.select()"></div>
+		<div class="mb04">
+			<button class="invinv" onclick="pc_width_1920px()">1920px</button>
+			<button class="invinv" onclick="pc_width_xxpc()">xx%</button>
+		</div>
+		<div class="mb04">Finesse: <input type="number" id="filter_quality" class="invinv w80px" onclick="this.select()"></div>
+		<div class="flex flex_wrap mb04">
+			<div id="redraw" class="table tag btn mr2" onclick="bt_preview('jpg')">en .jpg</div>
+			<div id="redraw" class="table tag btn mr2" onclick="bt_preview('webp')">en .webp</div>
+		</div>
+	</div>
 </div>
 
-</div>
-
-<div id="div_compressed" class="flex flex_wrap mh100vh" style="width:50%"></div>
+<div id="div_compressed" class="flex flex_wrap mh100vh" style="width:65%"></div>
 
 </div>
 
