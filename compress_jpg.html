@@ -18,13 +18,13 @@ button{padding:.3em .5em;font-size:.9em;}
 </style>
 <script>
 
+// par colmaire julien début 2025, stocké sur github/msnbrest
+
 // features :
 // -> choix du fichier d'entré (car plusieurs fichiers possible d'un coup)
 // -> ajouter des filtres
 // -> regler la taille
 // -> choisir la compression ( comme avant )
-
-
 
 // tiens c'est marrant, ça fait "divversion"
 let div_version= ( ext, dl_id, file_meta, canva )=>{
@@ -60,9 +60,11 @@ conv_milliers= val=> (""+val).replace(/\B(?=(\d{3})+\b)/g, "'"),
 init= _=>{
 
 	s_to_h("quality");
+	s_to_h("contrast");
 	s_to_h("blur");
 	_sel("#pc_width").onkeyup= event=>{   h_to_s("width");   };
 	_sel("#filter_quality").onkeyup= event=>{   h_to_s("quality");   };
+	_sel("#filter_contrast").onkeyup= event=>{   h_to_s("contrast");   };
 	_sel("#filter_blur").onkeyup= event=>{   h_to_s("blur");   };
 
 	const dropArea = _sel(".glisser");
@@ -106,7 +108,7 @@ bdd= {
 	imported_files: [], // liste de fichiers importés [{ file, }]
 	imported_files_lastind: -1,
 	ready_to_dl: [], // liste de fichiers créés
-	filters: { quality: 20, blur: 0 }
+	filters: { quality: 20, blur: 0, contrast: 100 }
 },
 
 
@@ -314,16 +316,34 @@ auto_max= {
 
 bt_preview= ext=>{
 
-	if( ext!="jpg" && ext!="webp" ){ return; }
+	if( ext!="jpg" && ext!="webp" && ext!="png" ){ return; }
 
 	_sel("#div_compressed").innerHTML= "";
 	trt.rf_ti= bdd.imported_files[ready_to_draw.ind].image;
 	trt.rf_c1= new_canvas(); // canvas 1) pour filtres
 	trt.rf_c1.c.width= trt.rf_ti.width;
 	trt.rf_c1.c.height= trt.rf_ti.height;
-	// todo ajout de filtres contrast
+	// todo ajout de filtres contrast car là y'a que pour png
 	bdd.filters.blur &&( trt.rf_c1.d.filter= "blur("+ bdd.filters.blur +"px)" );
 	trt.rf_c1.d.drawImage( trt.rf_ti, 0, 0, trt.rf_ti.width, trt.rf_ti.height, 0, 0, trt.rf_ti.width, trt.rf_ti.height );
+	if( ext=="png" ){
+		// Récupération des données de l'image
+		const imageData = trt.rf_c1.d.getImageData(0, 0, trt.rf_c1.c.width, trt.rf_c1.c.height);
+		const data = imageData.data;
+
+		// Boucle sur chaque pixel pour modifier les pixels blancs
+		for (let i = 0; i < data.length; i += 4) {
+			if( data[i + 3] === 255 ){ // remplacer le pixel par une version "alpha by scan"
+				data[i + 3] = ( 255-Math.min(data[i],data[i + 1],data[i + 2]) )*(bdd.filters.contrast/100)|0; // invers min col from 255
+				data[i] = 0;
+				data[i + 1] = 0;
+				data[i + 2] = 0;
+			}
+		}
+
+		// Application des modifications sur le canvas
+		trt.rf_c1.d.putImageData(imageData, 0, 0);
+	}
 
 	let o_gt= trt.rf_ti.width < trt.rf_ti.height ? trt.rf_ti.height : trt.rf_ti.width;
 	let leratio= ( bdd.filters.width / trt.rf_c1.c.width )+.000001;
@@ -347,6 +367,7 @@ bt_preview= ext=>{
 qui_de_quoi={
 	"width": "#pc_width",
 	"quality": "#filter_quality",
+	"contrast": "#filter_contrast",
 	"blur": "#filter_blur"
 },
 
@@ -392,10 +413,10 @@ moved= event=>{
 
 add_client_result= ( ext, qual, w, h, file_meta, result )=>{
 
-	if( ext!="jpg" && ext!="webp" ){ return; }
+	if( ext!="jpg" && ext!="webp" && ext!="png" ){ return; }
 
 	let dl_id= bdd.ready_to_dl.length;
-	bdd.ready_to_dl.push({ file_meta: file_meta, result: result.toDataURL('image/'+(ext=="jpg"?"jpeg":"webp"), qual*0.01), qual: qual });
+	bdd.ready_to_dl.push({ file_meta: file_meta, result: result.toDataURL('image/'+(ext=="jpg"?"jpeg":ext=="png"?"png":"webp"), qual*0.01), qual: qual });
 
 	let la= div_version( ext, dl_id, file_meta, result );
 	la.style.height= (h / (w / _sel("#div_compressed").clientWidth)) + "px";
@@ -458,7 +479,7 @@ bientot_bye= qui=>{
 
 go_dl= (ext,dl_id)=>{
 
-	if( ext!="jpg" && ext!="webp" ){ return; }
+	if( ext!="jpg" && ext!="webp" && ext!="png" ){ return; }
 
 	var a = document.createElement("a");
 	let ptr_result= bdd.ready_to_dl[+dl_id];
@@ -486,8 +507,6 @@ window.addEventListener("load",init,false);
 <main class="back222 br12 w90p mxa mxw1200px py20 px20 my08 mt48">
 
 <div class="mb20 contour1" id="help">Compression de jpg, png, bmp, webp... vers jpg (ou webp) qualité au choix.Pour commencer, importez des fichiers, en haut de l'écran</div>
-
-
 
 <div class="mb20 fixed0 flex">
 
@@ -524,7 +543,9 @@ window.addEventListener("load",init,false);
 			<button class="invinv" onclick="pc_width_xxpc()">xx%</button>
 		</div>
 		<div class="mb04">Qualité: <input type="number" id="filter_quality" class="invinv w80px" onclick="this.select()"></div>
+		<div class="mb04">Contrast: <input type="number" id="filter_contrast" class="invinv w80px" onclick="this.select()"></div>
 		<div class="flex flex_wrap mb04">
+			<div id="redraw" class="table tag btn mr2" onclick="bt_preview('png')">en .png</div>
 			<div id="redraw" class="table tag btn mr2" onclick="bt_preview('jpg')">en .jpg</div>
 			<div id="redraw" class="table tag btn mr2" onclick="bt_preview('webp')">en .webp</div>
 			<!--<div id="redraw" class="table tag btn mr2" onclick="auto_max.f('webp',200000)" title="Automatic webp max 200ko">auto 200k</div>-->
