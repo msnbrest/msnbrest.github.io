@@ -5,12 +5,14 @@
 <script src="nanojs.js"></script>
 <style>
 .glisser{background:#282828;box-shadow:0 0 0 1px #080 inset}
+.opa2{opacity:.2;}
 .cadre{min-height:90px;}
 .contour_cadre{box-shadow:0 0 0 1px #444 inset;}
 .contour1{padding:1.2em .8em 1em 1.4em;box-shadow:4px 4px 16px 0 #111;border-radius:12px;}
-.fixed0{position:fixed;left:0;top:0;width:100%;z-index:2;}
+.fixed0{position:fixed;left:0;top:0;width:50%;z-index:2;}
+.fixed1{position:fixed;right:0;top:0;width:50%;z-index:1;}
 .invinv{filter:invert(1);}
-.icon99{width:9em;height:9em;}
+.icon_8_8{width:8em;height:8em;}
 .iconselected{box-shadow:0 0 .8em .2em #dc0;}
 button{padding:.3em .5em;font-size:.9em;}
 </style>
@@ -36,7 +38,7 @@ let div_version= ( ext, dl_id, file_meta, canva )=>{
 	let div2= document.createElement("div");
 	div2.classList= "mb10";
 	let span1= document.createElement("span");
-	span1.classList= "tag btn";
+	span1.classList= "tag btn"+ ( len*0.75<201000? "": " jaune" );
 	span1.onclick= event=> go_dl(ext,dl_id);
 	span1.innerHTML= `Bytes: ${ conv_milliers((len*0.75|0)+"") }o (=${ (len*0.75/file_meta.file.size*100).toFixed(1) }%), Dim:${ canva.width }x${ canva.height }</span>`;
 	div2.appendChild(span1);
@@ -131,8 +133,8 @@ from_ind: ind=>{
 	ready_to_draw.file_meta= bdd.imported_files[ind];
 	ready_to_draw.ind= ind;
 
-	for( const elem of _sels(".icon99") ){ elem.classList.remove("iconselected"); }
-	_sel(".icon99[data-ind='"+ ind +"']").classList.add("iconselected");
+	for( const elem of _sels(".icon_8_8") ){ elem.classList.remove("iconselected"); }
+	_sel(".icon_8_8[data-ind='"+ ind +"']").classList.add("iconselected");
 
 	bdd.filters["width"]= ready_to_draw.file_meta.image.width;
 	s_to_h( "width" );
@@ -170,7 +172,7 @@ reader_tr= ( result, ind )=>{
 		_sel("#choix_files").innerHTML+= div_icon( ind, result, bdd.imported_files[ind].image );
 		if( ind==0 ){
 			trt.from_ind( +_sel("#choix_files").firstChild.getAttribute("data-ind") );
-			_sel("#help") &&( _sel("#help").parentElement.classList.remove("contour1"), _sel("#help").remove() );
+			_sel("#help") &&( _sel("#help").remove() );
 		}
 	};
 
@@ -181,7 +183,132 @@ reader_tr= ( result, ind )=>{
 
 
 
-div_icon= ( ind, result, img )=> `<div class="tag btn mr2 icon99" data-ind="${ind}" onclick="trt.from_ind(${ind});" style="background:url('${result}')  no-repeat center center/cover">${ img.width+" x "+img.height }</div>`,
+div_icon= ( ind, result, img )=> `<div class="tag btn mr2 icon_8_8" data-ind="${ind}" onclick="trt.from_ind(${ind});"
+	style="background:url('${result}') no-repeat center center/cover">
+	<span onclick="bientot_bye(this.parentElement)">XXX</span><br>
+	${ img.width +"x"+ img.height }
+	</div>`,
+
+
+
+auto_max= {
+	/*oqp: false,
+	ext: null,
+	len: null,
+	sizes: [],
+	f: ( ext, len)=>{
+		if( auto_max.oqp || ready_to_draw.ind==null ){ return; }
+		auto_max.ext= ext;
+		auto_max.len= len;
+		auto_max.sizes= [];
+		auto_max.nanoloop();
+	},
+	nanoloop: _=>{
+		console.info("nanoloop");
+		if( auto_max.sizes.length<1 ){
+			// todo lancer une fois la compression selon ext
+			// et attendre affichage pour la suite
+			// et stocker params [flou,sizepx,qualite,poids]
+		}else{
+			// todo si poids plus grand que 250ko alors qualité divisé par 10 sauf si resolution trop grande (plus de 2x 1920) sauf si flou 0
+			// donc faudra au pire des cas, apres plusieurs iterations:
+			- qualité 20
+			- qualité 40 ou qualité 12 selon > / < 200000
+			- flou 1 qualité 20
+			- qualité 50 ou qualité 12 selon.
+			- qualité 72 ou qualité 4 selon.
+			- reso 1920 max qualité 20
+			- qualité 24 ou qualité 12 selon.
+			- qualité 32 ou qualité 4 selon.
+			- flou 2 qualité 20
+			- qualité 24 ou qualité 12 selon.
+			- qualité 32 ou qualité 4 selon.
+			et si à flou 2 reso 1920 qualité 0 c'est encore trop, euh putain xD faudrait une zone "message" pour dire "pret à être téléchargé" / "fin automat"
+		}
+		setTimeout( auto_max.nanoloop, 500 );
+	},*/
+	is_acceptable: _=>{
+		return bdd.ready_to_dl.length>0 ? bdd.ready_to_dl[bdd.ready_to_dl.length-1].result.length*0.75<272000 : false;
+	},
+	recompil: ( width, quality, blur, ext )=>{
+			_sel("#pc_width").value= width==null? bdd.imported_files[ready_to_draw.ind].image.width: width;   h_to_s("width");
+			_sel("#filter_quality").value= quality;   h_to_s("quality");
+			_sel("#filter_blur").value= blur;   h_to_s("blur");
+			bt_preview(ext);
+	},
+	i: nb=>{
+		if(nb==7){
+			auto_max.recompil( 1920, 60, 1, 'webp' );
+		}
+		if(nb==8){
+			auto_max.recompil( 1920, 76, 1, 'webp' );
+		}
+		if(nb==9){
+			auto_max.recompil( 1920, 88, 1, 'webp' );
+		}
+		/*if(nb==1){
+			auto_max.recompil( null, 20, 0, 'webp' );
+		}
+		if(nb==2){
+			if( auto_max.is_acceptable() ){
+				auto_max.recompil( null, 40, 0, 'webp' );
+			}else{
+				auto_max.recompil( null, 12, 0, 'webp' );
+			}
+		}
+		if(nb==3){
+			auto_max.recompil( null, 20, 1, 'webp' );
+		}
+		if(nb==4){
+			if( auto_max.is_acceptable() ){
+				auto_max.recompil( null, 50, 1, 'webp' );
+			}else{
+				auto_max.recompil( null, 12, 1, 'webp' );
+			}
+		}
+		if(nb==5){
+			if( auto_max.is_acceptable() ){
+				auto_max.recompil( null, 72, 1, 'webp' );
+			}else{
+				auto_max.recompil( null, 4, 1, 'webp' );
+			}
+		}
+		if(nb==6){
+			auto_max.recompil( 1920, 20, 1, 'webp' );
+		}
+		if(nb==7){
+			if( auto_max.is_acceptable() ){
+				auto_max.recompil( 1920, 24, 1, 'webp' );
+			}else{
+				auto_max.recompil( 1920, 12, 1, 'webp' );
+			}
+		}
+		if(nb==8){
+			if( auto_max.is_acceptable() ){
+				auto_max.recompil( 1920, 32, 1, 'webp' );
+			}else{
+				auto_max.recompil( 1920, 4, 1, 'webp' );
+			}
+		}
+		if(nb==9){
+			auto_max.recompil( 1920, 20, 2, 'webp' );
+		}
+		if(nb==10){
+			if( auto_max.is_acceptable() ){
+				auto_max.recompil( 1920, 24, 2, 'webp' );
+			}else{
+				auto_max.recompil( 1920, 12, 2, 'webp' );
+			}
+		}
+		if(nb==11){
+			if( auto_max.is_acceptable() ){
+				auto_max.recompil( 1920, 32, 2, 'webp' );
+			}else{
+				auto_max.recompil( 1920, 4, 2, 'webp' );
+			}
+		}*/
+	}
+},
 
 
 
@@ -305,6 +432,30 @@ pc_width_200pc= _=>{   _sel("#pc_width").value= bdd.imported_files[ready_to_draw
 
 
 
+sw_w100p= _=>{
+
+( qui=>{
+	qui.classList.toggle('mxw1200px');
+	if( qui.classList.contains('mxw1200px') ){
+		qui.classList.remove('w100p');   qui.classList.add('w90p');
+	}else{
+		qui.classList.remove('w90p');   qui.classList.add('w100p');
+	}
+})( _sel('main') );
+
+},
+
+
+
+bientot_bye= qui=>{
+
+	let deja= _sel(".icon_8_8.opa2");
+	if( deja ){ deja.remove(); }
+	qui.classList.add("opa2");
+},
+
+
+
 go_dl= (ext,dl_id)=>{
 
 	if( ext!="jpg" && ext!="webp" ){ return; }
@@ -325,23 +476,22 @@ window.addEventListener("load",init,false);
 </script>
 </head><body class="darkmode mh100vh flex flex_column flex_between">
 
-<header class="borb1_666 mb04 back222 py08 mt40">
+<header class="fixed1 borb1_666 mb04 back222 py08">
 	<ul class="flex flex_spaced">
 		<li class="my08"><a class="tag btn big jaune" href="index.html">Accueil</a></li>
+		<li class="my08"><div id="redraw" class="table btn" onclick="sw_w100p()">&#60; &#62;</div></li>
 	</ul>
 </header>
 
-<main class="back222 br12 w90p mxa mxw1200px py20 px20 my08">
+<main class="back222 br12 w90p mxa mxw1200px py20 px20 my08 mt48">
 
-
-
-<div class="mb20 contour1">Compression de jpg, png, bmp, webp... vers jpg (ou webp) qualité au choix.<div id="help">Pour commencer, importez des fichiers, en haut de l'écran</div></div>
+<div class="mb20 contour1" id="help">Compression de jpg, png, bmp, webp... vers jpg (ou webp) qualité au choix.Pour commencer, importez des fichiers, en haut de l'écran</div>
 
 
 
 <div class="mb20 fixed0 flex">
 
-<div class="tag btn jaune" style="opacity:.75" onclick="_sel('#ducro').click()">Importer un fichier</div>
+<div class="tag btn jaune" style="opacity:.66" onclick="_sel('#ducro').click()">Importer un fichier</div>
 
 <div class="glisser w90p jaune mb04 fs11" style="padding:1.8em 0 1.8em 1em">glisser/déposer une image dans cette zone</div>
 
@@ -366,8 +516,6 @@ window.addEventListener("load",init,false);
 
 <div style="width:35%;">
 
-	<div class="flex"><div class="flex flex_wrap" id="choix_files"></div></div>
-
 	<div id="configs">
 		<div class="mb04">Flou: <input class="invinv w80px" type="number" id="filter_blur" onclick="this.select()"></div>
 		<div class="mb04">Largeur: <input class="invinv w80px" type="number" id="pc_width" onclick="this.select()"></div>
@@ -375,12 +523,18 @@ window.addEventListener("load",init,false);
 			<button class="invinv" onclick="pc_width_1920px()">1920px</button>
 			<button class="invinv" onclick="pc_width_xxpc()">xx%</button>
 		</div>
-		<div class="mb04">Finesse: <input type="number" id="filter_quality" class="invinv w80px" onclick="this.select()"></div>
+		<div class="mb04">Qualité: <input type="number" id="filter_quality" class="invinv w80px" onclick="this.select()"></div>
 		<div class="flex flex_wrap mb04">
 			<div id="redraw" class="table tag btn mr2" onclick="bt_preview('jpg')">en .jpg</div>
 			<div id="redraw" class="table tag btn mr2" onclick="bt_preview('webp')">en .webp</div>
+			<!--<div id="redraw" class="table tag btn mr2" onclick="auto_max.f('webp',200000)" title="Automatic webp max 200ko">auto 200k</div>-->
+			<div id="redraw" class="table tag btn mr2 bc36" onclick="auto_max.i(7)">min</div>
+			<div id="redraw" class="table tag btn mr2 bc36" onclick="auto_max.i(8)">moy</div>
+			<div id="redraw" class="table tag btn mr2 bc36" onclick="auto_max.i(9)">max</div>
 		</div>
 	</div>
+
+	<div class="flex"><div class="flex flex_wrap" id="choix_files"></div></div>
 </div>
 
 <div id="div_compressed" class="flex flex_wrap mh100vh" style="width:65%"></div>
