@@ -1,0 +1,49 @@
+<!DOCTYPE html><html lang="fr"><head><title>Mini Jeu - Shut the box</title><meta charset="UTF-8">
+<link rel="icon" type="image/x-icon" sizes="128x128" href="favicon-128.ico">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="nanocss.css">
+<script src="nanojs.js"></script>
+<style>
+body{background:#333;color:#bbb;font-family:Arial, sans-serif;user-select:none;}
+button{filter:invert(1) brightness(.5);font-size:20pt;cursor:pointer;}
+#plato{padding:1em 0;}
+.jeu{font-size:32pt;}
+.tile{width:1.1em;text-align:center;background:#420;cursor:pointer;margin-right:.3em;}
+.ofh{overflow:hidden;}
+.mr10{margin-right:1em;}
+
+.hl{color:#484;}.destry{color:#222;}
+.tile_white{color:#f00;}
+</style>
+
+<script src="shut_the_box.js"></script>
+</head><body class="darkmode mh100vh flex flex_column flex_between">
+
+<header class="borb1_666 mb04 back222 py08">
+	<ul class="flex flex_spaced">
+		<li class="my08"><a class="tag btn big jaune" href="index.html">Accueil</a></li>
+	</ul>
+</header>
+
+<main class="back222 br12 w90p mxa mxw1200px py20 px20 my08">
+
+<div class="ofh" onclick="sw_h(this)">But : lancez les dès et retirez des tiles selon la sommes des dès. jouable au clavier (1 à 9, espace pour lancer et shift pour rejouer). Un seul dès à 1 si le dernier tile est 1</div>
+
+<div class="jeu">
+	<!--<div class="pd8_0"><span id="now_score"></span> &nbsp; | &nbsp; <span id="best_score"></span> &nbsp; | &nbsp; <span id="last_score"></span> &nbsp; | &nbsp; <span id="oups"></span></div>-->
+	<div class="flex">
+		<div><button onclick="lancer()" class="mr10">Lancer</button></div>
+		<div><button onclick="rejouer()" class="mr10">Rejouer</button></div>
+		<div id="res_des" class="flex"></div>
+	</div>
+	<div id="plato" class="flex"></div>
+</div>
+
+</main>
+
+<footer class="bort1_666 back222 px08 py08">
+	todo
+</footer>
+
+</body></html>
+
