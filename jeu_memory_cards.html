@@ -1,0 +1,206 @@
+<!DOCTYPE html><html lang="fr"><head><title>Mini Jeu - Memory Cards</title><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/x-icon" sizes="128x128" href="favicon-128.ico">
+<link rel="stylesheet" href="nanocss.css">
+<script src="nanojs.js"></script>
+<style>
+body{background:#141414;color:#ccc;font-family:"courier",sans-serif}
+
+.case{ margin: .5em; border-radius: 8px; transition: box-shadow 0.05s ease-in-out; box-shadow:4px 4px 12px 0 #c061; cursor:pointer; }
+
+.casein{ width:20px; height:20px; border-radius: 8px;transition: filter 0.5s ease-in-out; filter: contrast(0) brightness(.5); }
+
+.case:hover{ box-shadow:2px 2px 20px 0 #f0c; }
+
+.casein.permanent{ box-shadow:2px 2px 8px 0 #0808; }
+
+.casein.permanent,.casein.visible{ filter: contrast(1) brightness(1); }
+
+.line{ display: flex; flex-wrap:wrap; }
+</style>
+<style id="style1"></style>
+<script>
+let init= _=>{   _sel("#plato").innerHTML= "<div id='pts'>Faites des paires</div>"+ inflex( html_by_cards( gene_uids() ) );   },
+
+
+is_num= val=> !isNaN(parseFloat(val)) && isFinite(val),
+
+
+gene_uids= _=>{
+
+	let combien= prompt("Combien de paires à faire? (entre 3 et 99)","9");
+	if( !is_num(combien) || combien<3 || combien>99 ){ combien= 9; }
+	
+	_sel("#style1").innerHTML=".casein{width:calc("+(3.7/(+combien+29))+" * 100vw); height:calc("+(3.7/(+combien+29))+" * 100vw); border-radius:7px;}";
+	let arr= Array.from({length: combien}, (_, i) => i);
+	gene_faces( arr.length, Object.keys(bdd.icons) );
+	videur._mem= dupli( arr );
+	videur._mem.sort( (a,b)=> Math.random()-0.5 );
+	return videur._mem.map((vv,kk)=>kk);
+},
+
+
+gene_faces= (len,list)=>{
+	list.sort( (a,b)=> Math.random()-0.5 ); // random
+	bdd.faces_name= []; // prepar
+	for( let i=0; i<len; i++ ){   bdd.faces_name.push( list[i%list.length] );   } // add type with modulo
+},
+
+
+inflex= html=> `<div class="line">${ html }</div>`,
+
+
+html_by_cards= arr=> arr.map( key=> one_card(key) ).join(""),
+
+
+one_card= key=> `<div class="case" data-key="${ key }"><div class="casein" onclick="clic(this)" style="${f_back(bdd.faces_name[videur._mem[key]])}"></div></div>`,
+
+
+dupli= arr=> arr.concat(arr),
+
+
+clic= thiss=>{   ( key=>{ key==null ||( videur.voir( thiss, key ) ); })( thiss.parentElement.getAttribute("data-key") )   },
+
+
+videur= {
+	_mem: [],   _pts: 50,   _recto1: null,   _recto2: null,
+
+	voir: ( thiss, key )=>{
+
+		if( thiss.classList.contains("permanent") ){ return; } // injouable
+
+		if( videur._recto1==null ){   videur._recto1= key;   thiss.classList.add("visible");   return;   } // set 1
+
+		if( videur._recto1==key ){ return; } // interdit au double clic
+
+		if( videur._recto2==null ){ // set 2, verif
+			videur._recto2= key;   thiss.classList.add("visible");
+			if( videur._mem[videur._recto1]==videur._mem[videur._recto2] ){
+				videur._pts+=100;   _sel("#pts").innerHTML= videur._pts;
+				[ videur._recto1, videur._recto2 ].forEach( val=>{   _sel("[data-key='"+ val +"'] .casein").classList.add("permanent");   } );
+				return;
+			}
+			videur._pts--;   _sel("#pts").innerHTML= videur._pts;
+			return;
+		}
+
+		// ici, on a cliqué sur la futur premiere carte (nouveau groupe)
+		[ videur._recto1, videur._recto2 ].forEach( val=>{   _sel("[data-key='"+ val +"'] .casein").classList.remove("visible");   } );
+		videur._recto1= null;   videur._recto2= null;   videur.voir( thiss, key ); // oublier et recliquer
+	}
+},
+
+
+sw_w100p= _=>{
+
+( qui=>{
+	qui.classList.toggle('mxw1200px');
+	if( qui.classList.contains('mxw1200px') ){
+		qui.classList.remove('w100p');   qui.classList.add('w90p');   qui.classList.add('px20');
+	}else{
+		qui.classList.remove('w90p');   qui.classList.add('w100p');   qui.classList.remove('px20');
+	}
+})( _sel('main') );
+
+},
+
+
+f_back= txt_id=> `background:#000 url(\'data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\' viewBox=\\'0 0 100 100\\'><g fill=\\'%23420\\'><path d=\\'M${ bdd.icon_func( txt_id ) }z\\'/></g></svg>\') no-repeat center center/contain`,
+
+
+bdd= { // info du 20240131 : 54 icones pour 42 apps
+
+	faces_name: [],
+	icons: { // regle : f est une fonction, les autres sont des types icons[name]->{path,creator}
+
+	"undef":{"path":"20 20l20 40l20 0l-20 20l40 0l-60 0l20 -20l40 -20l0 -20l-20 0l-20 40l40 20l20 20","creator":"rand+msnbrest"},
+	"MAISON cheminée":{"path":"9 96v-50l40-40l16,16v-12h16v28l8,8v50","creator":"rand+msnbrest"},
+	"mazon":{"path":"50 5l-50 35h15v55h25v-35h20v35h25v-55h15","creator":"rand+msnbrest"},
+	"oiseau de coté":{"path":"78,15v36l-9,12l30,3v3l-15,6l-15,3h-24l-18-6l-12,-3l-12-6l12,-6l12,3h12","creator":"rand+msnbrest"},
+	"oiseau1":{"path":"46 44l9 18l-36-48v6l21 27l-18 45l-12-27l18-39l39-12l24 30","creator":"rand+msnbrest"},
+	"oiseau2":{"path":"2 90l48-32l16-48l16,32v16h16","creator":"rand+msnbrest"},
+	"champignon":{"path":"5,58l16-8l16-4v48h24v-48l16,4l16,8v-16l-4-16l-16-16l-24-4l-24,4l-16,16l-4,16","creator":"rand+msnbrest"},
+	"champi":{"path":"95,45l-48,-18l0,48l18,0l-21-48l-36,36","creator":"rand+msnbrest"},
+	"rose":{"path":"50,95l-3-18l16-2l-3-9l-18-3v-6l20-3l0-6l-26-6l-7-10l1-9l9-9l9,0l6,8l2,12","creator":"rand+msnbrest"},
+	"cravate":{"path":"50,15l-10-10l20,0l-10,10l10,25l0,45l-10,12l-10-12l0,-45","creator":"rand+msnbrest"},
+	"nucleaire":{"path":"66 90h-40l52-80l20 32h-96l20-32","creator":"rand+msnbrest"},
+	"nuage":{"path":"18 58c-15 5-15-30 10-25c-5-15 30-15 30 0c-5-20 40 0 20 10c20-10 20 30 5 25c0 15 -40 15 -35 0c-10 15 -40 0 -30 -10","creator":"rand+msnbrest"},
+	"cercle":{"path":"50,90a40 40 0 1 1 0.01 0","creator":"rand+msnbrest"},
+	"cercle haut":{"path":"50,45a40 20 0 1 1 0.01 0","creator":"rand+msnbrest"},
+	"triangle simple":{"path":"10 30v40h80","creator":"rand+msnbrest"},
+	"triangle large":{"path":"0,90l50-80l50,80","creator":"rand+msnbrest"},
+	"triangle play":{"path":"22,18l60,32l-60,32","creator":"rand+msnbrest"},
+	"fleche haute":{"path":"50,5l40,40l-10,10l-30-30l-30,30l-10-10","creator":"rand+msnbrest"},
+	"fleche gps haut":{"path":"50,10l40,80l-40-20l-40,20","creator":"rand+msnbrest"},
+	"fleche droite":{"path":"4,58h56v32l40-40l-40,-40v32h-56","creator":"rand+msnbrest"},
+	"fleche droite mini":{"path":"75,30v40l20,-20","creator":"rand+msnbrest"},
+	"sablier penché":{"path":"10,50l40-40v80l40-40","creator":"rand+msnbrest"},
+	"sablier":{"path":"20,20l60,60h-60l60-60","creator":"rand+msnbrest"},
+	"oeuf":{"path":"50,90a30 40 0 1 1 0.01 0","creator":"rand+msnbrest"},
+	"balon bodruch":{"path":"60 65 l12,-3l-9,12l0-20 l-2-12l-6-12l-12-12l-10-6l-8-2l-8,2l-8,8l-2,8l2,8l6,10l12,12l12,6l12,2","creator":"rand+msnbrest"},
+	"eclair":{"path":"60,10l-25,40h20l-20,40l35-50h-15l30-30","creator":"rand+msnbrest"},
+	"fantom1":{"path":"98 64 l-30-8 v32 l-28-20 l-8,32 l-30-54 l0-24 l14-18 l20-4 l24,8","creator":"rand+msnbrest"},
+	"fantom2":{"path":"80 92 l-12-12 l0,12 l-6-6 l0,6 l-19-20 l-6-18 l-12-12 l18-18 l0-12 l10,3 l-10,9","creator":"rand+msnbrest"},
+	"genre de fumée":{"path":"10 60l48,0l-16,16l48,0l0-48l-56,8l24,8","creator":"rand+msnbrest"},
+	"chien":{"path":"77,86v-24l12-36v-12l-12,24l-12-36v24l-24,12h-18l-12,24l36,36","creator":"rand+msnbrest"},
+	"poisson":{"path":"75,80l15-10l-80-20v-20l40,10","creator":"rand+msnbrest"},
+	"check valide":{"path":"92,12h-5l-50,60l-20-30h-10l20,45h20","creator":"rand+msnbrest"},
+	"presque A":{"path":"50,10l40,80h-15l-15-30h-20l-15,30h-15","creator":"rand+msnbrest"},
+	"logo sympa":{"path":"55,98h-12l-24-36l12-36h48l-12-24l-12,24h-24l24-24l-12,24","creator":"rand+msnbrest"},
+	"renard chenapan":{"path":"80,45l0-32l-16,32l16,32l-28,0l-40-32l16,32","creator":"rand+msnbrest"},
+	"logo F1":{"path":"80 40l14 20h-24l-18 -26l-28 8l12 18l-32 0","creator":"rand+msnbrest"},
+	"chapiteau":{"path":"50,10l40,40v30h-25v-15h-30v15h-25v-30","creator":"rand+msnbrest"},
+	"coeur":{"path":"50,15c-30-30-50,15-45,30c10,30,30,30,45,55c20-30,40-30,45-55c5-20-20-60-45-30","creator":"rand+msnbrest"},
+	"plateau 3D":{"path":"50,10l-45,30l45,55l45-55l-45-30","creator":"rand+msnbrest"},
+	"triang sans quart":{"path":"10,10l80,80v-48h-32v-32","creator":"rand+msnbrest"},
+	"carré sans quart":{"path":"10,10h80v80h-40v-40h-40","creator":"rand+msnbrest"},
+	"dents Adobe":{"path":"0,0v30l20-30h15l15,30l15-30h15l20,30v70h-5l-20-30l-20,30h-10l-20-30l-20,30h95v-100","creator":"rand+msnbrest"},
+	"stylo":{"path":"35,55l-10,8h-16v2l16-2l15-2l50-26l-3-4","creator":"rand+msnbrest"},
+	"piece tetris":{"path":"12,28h75v25h-25v25h-25v-25h-25","creator":"rand+msnbrest"},
+	"avion":{"path":"90,64l7-28h-10l-14,21l-10-10l 8-4l-7-4h -8l-3-3l-21-7h-28l14,21l-10,4l7,4l10-2l45,24h14","creator":"rand+msnbrest"},
+	"sd":{"path":"26,19 h40 l12,12 l-5,54 h-44","creator":"rand+msnbrest"},
+	"monstr":{"path":"18,98l18-24l8,24h12l10-24l16,24M28,20h8v16h-8M68,20h8v16h-8","creator":"rand+msnbrest"},
+	"usine":{"path":"14,76v-24l24-24v24l24-24v24l24-24v48","creator":"rand+msnbrest"},
+	"diamond":{"path":"15,35l20-15h30l20,15l-35,50","creator":"rand+msnbrest"},
+	"requin":{"path":"65,45l12,8v-12l8-16h-16l-16,6l-12-4l4,8l-12,9l-12 16l-8-2l8,14l2-8","creator":"rand+msnbrest"},
+	"autoroute":{"path":"90,80l-75-60l15,60h15l-20,-45l50,45","creator":"rand+msnbrest"},
+	"cerfvolant":{"path":"90,80 l-32-32 h-24 l-24-24 h25 l16,16","creator":"rand+msnbrest"},
+	"murs":{"path":"0,95v-60l10-10h80l10,5v60l-10-25h-40v-35h-20v35h-20","creator":"rand+msnbrest"},
+	"piece trou":{"path":"50,86l32-18v-36l-32-18l-32,18v36l16-24l8,4l-16,26","creator":"rand+msnbrest"},
+	"tampon":{"path":"60,20l3,2l-24,48h12l-24-12v24l12-12l-4-2","creator":"rand+msnbrest"},
+	"laposte":{"path":"10,30 l24,24 v24 h24 l24-24 l-42-24","creator":"rand+msnbrest"},
+	"bdd":{"path":"20,40h60v10h-60zM20,60h60v10h-60zM20,80h60v10h-60zM30,34h40v5h-40zM30,54h40v5h-40zM30,74h40v5h-40","creator":"msnbrest"},
+	// "xxxxx":{"path":"xxxxx","creator":"rand+msnbrest"},
+	},
+	icon_func: name=>{
+
+		if( !bdd.icons[name] ){ return "10,10h80v80h-80"; } return bdd.icons[name].path;
+	},
+};
+
+
+
+window.addEventListener("load",init,false);
+</script>
+</head><body>
+
+<header class="borb1_666 mb04 back222 py08">
+	<ul class="flex flex_spaced">
+		<li class="my08"><a class="tag btn big jaune" href="index.html">Accueil</a></li>
+		<li class="my08"><div id="redraw" class="table btn" onclick="sw_w100p()">&#60; &#62;</div></li>
+	</ul>
+</header>
+
+<main class="back222 br12 w90p mxa mxw1200px py20 px20 my08">
+
+<div class="jeu">
+	<div id="plato"></div>
+</div>
+
+</main>
+
+<footer class="bort1_666 back222 px08 py08">
+	todo
+</footer>
+
+</body></html>
