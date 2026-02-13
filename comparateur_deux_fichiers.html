@@ -53,6 +53,14 @@ compar= _=>{ // by button
 	), +_sel("#lignes_autour").value );
 },
 
+compar_no_spaces= _=>{
+
+	_sel("#result").innerHTML= diff.toDMP_whites( diff.go(
+		("\n"+_sel("#infos_0").value).replace(/\n[ \t]+/g,"\n").replace(/</g,"<"),
+		("\n"+_sel("#infos_1").value).replace(/\n[ \t]+/g,"\n").replace(/</g,"<")
+	), +_sel("#lignes_autour").value );
+},
+
 dragover= e=>{ e.preventDefault();   e.stopPropagation();   e.target.classList.add('hover'); },
 
 dragleave= e=>{ e.preventDefault();   e.stopPropagation();   e.target.classList.remove('hover'); },
@@ -111,6 +119,7 @@ window.addEventListener("load", init, 0);
 <div class="py08">
 	<div id="extra_menu" class="flex flex_wrap">
 		<div class="btn tag mr2" onclick="compar()">comparer</div>
+		<button class="btn tag mr2" onclick="compar_no_spaces()">comparer sans espaces</button>
 		<!--<div class="btn tag mr2" onclick="download()">telecharger resultat moche</div>-->
 		<div class="btn tag mr2" onclick="exemple()">un exemple</div>
 		<div class="mr2"><input type="number" id="lignes_autour" min="-1" max="20" style="filter:invert(1);width:4em;" value="2">Lignes similaire visible (ou -1 pour afficher tout)</div>
@@ -126,3 +135,4 @@ window.addEventListener("load", init, 0);
 </footer>
 
 </body></html>
+
