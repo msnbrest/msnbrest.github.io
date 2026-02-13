@@ -2,8 +2,8 @@
 *{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif}   body{background:#111;color:#eee;user-select:none;}   canvas{border:1px solid #444}
 input{margin:10px}   input[type='file']{opacity:.3}   button{padding:.4em .6em;background:#323232;color:#ddd;border:0;border-radius:3px;}
 .zone_menu{display:flex;flex-direction:column;align-items:center;justify-content:center;}
-pre{position:absolute;left:1em;top:1em;opacity:.8;height:1.25em;overflow:hidden;cursor:pointer;color:#4bf;}
-pre.show{width:calc(100vw - 2em);text-align:center;opacity:1;background:#222e;padding:1em;height:auto;color:#ccc;}
+pre{position:absolute;left:1em;top:1em;padding:1em;width:13em;opacity:.8;height:1.25em;overflow:hidden;cursor:pointer;color:#4bf;}
+pre.show{width:calc(100vw - 2em);text-align:center;opacity:1;background:#222e;height:auto;color:#ccc;}
 </style></head><body>
 <div class="zone_menu">
 <div><input id=f type=file accept=audio style="display:none;"></div>
@@ -19,7 +19,7 @@ pre.show{width:calc(100vw - 2em);text-align:center;opacity:1;background:#222e;pa
 </div>
 <canvas id=c width=1600 height=600 style="position:absolute;left:calc(50vw - 800px);bottom:1em;"></canvas>
 <canvas id=d width=1600 height=600 style="position:absolute;left:calc(50vw - 800px);bottom:1em;"></canvas>
-<pre onclick="this.classList.toggle('show');" class="showa">
+<pre onclick="this.classList.toggle('show');">
 (mini doc utilisateur)
 
 Spectrum permet d'exporter en wav, un fichier contenant 1 à 2 canaux audio, dont on va éditer le contenu.
