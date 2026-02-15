@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf-8><title>Spectrum (webapp audio editor) v2.2</title><style>
+<!doctype html><html><head><meta charset=utf-8><title>Spectrum (webapp audio editor) v2.4</title><style>
 :root{--bg:#0f1720;--panel:#0b1520;--accent:#2dd4bf;--muted:#fad;--track:#071126;--wave:#1fbfa6;--glass:#fff1;}
 body{background:#111;color:#eee;user-select:none;font-family:sans-serif;}   canvas{border:1px solid #444}
 header{padding:0 0 .4em 0;border-bottom:1px solid #fff2;}
@@ -97,7 +97,7 @@ Spectrum permet d'exporter en wav, un fichier contenant 1 à 2 canaux audio, don
 
 > [F11] activer/désactiver le mode plein écran
 > [scroll] pour zoomer et dezoomer (avec centrage recalculé)
-> [espace] pour écouter 2 secondes (seon position selecteur)
+> [espace] pour écouter 2 secondes (selon position selecteur)
 > touches [gauche] et [droite] pour déplacer le lecteur temporaire (et autoplay)
 > [clic] pour déplacer le selecteur
 > [shift] + [clic] pour selectionner une zone depuis le pointeur 1
@@ -129,7 +129,7 @@ tiny_functions
 edit:
 e_add_dura_empty
 e_del_zone
-o_selecteurs
+o_selectors
 o_clipboard
 
 draw:
@@ -160,23 +160,29 @@ end_of_functions
 // et lorsque edit human input alors update display zoom
 // pareil pour position lecteur.
 
-//TODO refacto selecteur en selector et move sel1 sel2 dans clipboard,  et c, et d
-
 let _sel= sel=> document.querySelector(sel),
 c= _sel("#c"),
 d= _sel("#d");
 
-let aa, g_src, awb, sr=48000, meta_in= {}, start=0, w=c.width, w2=c.width/2|0, zoom_y=1, zoom_x=30*64,
+let aa, g_src, awb, sr=48000, meta_in={}, start=0, w=c.width, w2=c.width/2|0, zoom_y=1, zoom_x=30*64,
 h=c.height, h25=c.height*0.25|0, h50=c.height*0.5|0, h75=c.height*0.75|0,
 player= {
-	hover_x: 0, // position geographique du pointeur de selection en seconde
-	sel1: 0, // position selecteur reel 1 en seconde
-	sel2: null, // position selecteur reel 2 en seconde
+	hover_x: 0, // position geographique du pointeur en seconde
 	son_geox: 0, // timecode du lecteur temporaire en seconde
 	son_dur: 2, // duree de lecture du temporaire en seconde
 	ptr_cnt: 0,
 	audio_oqp: 0,
 },
+config={ // TODO config modifiable
+	colors:{
+		wave1: "#a26",
+		wave2: "#078"
+	},
+	zoom:{
+		power: 1.8
+	}
+}
+
 keyboard={}, ctx1=c.getContext("2d"), ctx2=d.getContext("2d");
 
 
@@ -194,15 +200,19 @@ let sec_to_px= sec=> Math.floor( (sec-start/sr)*(sr/zoom_x) );
 
 let sec_to_pcm= sec=> Math.max( 0, Math.min( Math.floor( sec*sr )+1, awb.length ) );
 
-let _def_sel1_by_hover= _=>{   player.sel1= player.hover_x;   player.son_geox= player.sel1;   _sel("[title='Selecteur1'] .value").innerHTML= player.sel1.toFixed(5);   };
+let to2= num=> num<10?"0"+num:num;
+
+let sec_to_minsec= sec=> to2(sec/60|0) +":"+ to2(sec%60|0) +( (sec%1).toFixed(5).replace(/^\-*0/,"").replace(/^(\.\d\d\d)/,"$1 ") );
+
+let _def_sel1_by_hover= _=>{   selectors.sel1= player.hover_x;   player.son_geox= selectors.sel1;   _sel("[title='Selecteur1'] .value").innerHTML= sec_to_minsec(selectors.sel1);   };
 
 
 
 // _menu_ | e_add_dura_empty
 _sel('#btn_add_dura_empty').addEventListener('click', _=>{
 
-	let insert_duration= sec_to_pcm( player.sel2==null ? 1 : player.sel2-player.sel1 );
-	let insert_at= sec_to_pcm(player.sel1);
+	let insert_duration= sec_to_pcm( selectors.sel2==null ? 1 : selectors.sel2-selectors.sel1 );
+	let insert_at= sec_to_pcm(selectors.sel1);
 	let t_data;
 
 	let new_buf= aa.createBuffer(awb.numberOfChannels, awb.length + insert_duration, sr);
@@ -229,12 +239,35 @@ _sel('#btn_add_dura_empty').addEventListener('click', _=>{
 // _menu_ | e_del_zone
 let f_remove= _=>{
 
-	if( player.sel2==null ){
+	if( selectors.sel2==null || awb.length < 2 ){
 		alert("il faut selectionner une zone");
 		return;
 	}
-	let del_duration= sec_to_pcm( player.sel2-player.sel1 );
-	let del_at= sec_to_pcm(player.sel1);
+
+	let del_duration= sec_to_pcm( selectors.sel2-selectors.sel1 );
+	let del_at= sec_to_pcm(selectors.sel1);
+
+	if( del_at >= awb.length ){
+		console.info("curseur hors limite");
+		return;
+	}
+
+	if( del_at + del_duration >= awb.length ){ // adapter selon demande utilisateur
+		del_duration= awb.length - del_at;
+	}
+
+	if( del_duration <= 0 ){
+		console.info("durée trop courte");
+		return;
+	}
+	if( del_duration == awb.length ){
+		del_duration-= 1;
+	}
+	// TODO degager si stable
+	console.info("awb",awb.length);
+	console.info("del_at",del_at);
+	console.info("del_duration",del_duration);
+
 	let t_data;
 
 	let new_buf= aa.createBuffer(awb.numberOfChannels, awb.length - del_duration, sr);
@@ -256,27 +289,33 @@ let f_remove= _=>{
 
 
 
-// _menu_ | o_selecteurs
-let selecteurs= {
+// _menu_ | o_selectors
+let selectors= {
+
+	sel1: 0, // position selecteur reel 1 en seconde
+
+	sel2: null, // position selecteur reel 2 en seconde
 
 	home: _=>{
 
 		player.hover_x= -0.0000002; // besoin d'un nombre légèrement negatif sec pour coller avant pixel (car selection parfaite)
 		mouse_down();
+		set_zoom_et_position(zoom_x,0);
 	},
 
 	end: _=>{
 
-		player.hover_x= awb.length/sr-0.000013;
+		player.hover_x= awb.length/sr-0.000023;
 		mouse_down();
+		set_zoom_et_position(zoom_x,awb.length-zoom_x*w);
 	},
 
 	all: _=>{
 
 		player.hover_x= -0.0000002; // besoin d'un nombre légèrement negatif sec pour coller avant pixel (car selection parfaite)
 		_def_sel1_by_hover();
-		player.sel2= awb.length/sr-0.000013;
-		_sel("[title='Selecteur2'] .value").innerHTML= player.sel2.toFixed(5);
+		selectors.sel2= awb.length/sr-0.000013;
+		_sel("[title='Selecteur2'] .value").innerHTML= sec_to_minsec(selectors.sel2);
 		redraw_overlay();
 	}
 };
@@ -292,13 +331,13 @@ let clipboard={
 
 	reset: _=>{
 
-		if( player.sel2==null ){
+		if( selectors.sel2==null ){
 			alert("selection vide");
 		}
-		let at= sec_to_pcm(player.sel1);
+		let at= sec_to_pcm(selectors.sel1);
 		let t_data;
 
-		clipboard.dur= sec_to_pcm( player.sel2-player.sel1 );
+		clipboard.dur= sec_to_pcm( selectors.sel2-selectors.sel1 );
 
 		clipboard.buffer= aa.createBuffer(awb.numberOfChannels, clipboard.dur, sr);
 
@@ -314,7 +353,7 @@ let clipboard={
 		let t_data;
 
 		let new_buf= aa.createBuffer(awb.numberOfChannels, awb.length + clipboard.dur, sr);
-		let at= sec_to_pcm(player.sel1);
+		let at= sec_to_pcm(selectors.sel1);
 
 		// canal 0
 		t_data= new_buf.getChannelData(0);
@@ -330,7 +369,9 @@ let clipboard={
 			t_data.set(awb.getChannelData(1).subarray(at), at + clipboard.dur); // old part 2
 		}
 
+		t_data= null;
 		awb= new_buf;
+		new_buf= null;
 		redraw_onde();
 
 	}
@@ -344,10 +385,10 @@ let redraw_onde= _=>{
 	if( !awb ){ return; }
 	ctx1.clearRect(0,0,w,h);
 
-	_sel("#infos").innerHTML= "de "+ start +" ("+( start/sr*2 ).toFixed(3)+"s à "+( (start+zoom_x*w2)/sr*2 ).toFixed(3)+"s) x "+( zoom_x|0 );
+	_sel("#infos").innerHTML= "de "+ start +" ("+ sec_to_minsec( start/sr ) +" s à "+ sec_to_minsec( (start+zoom_x*w)/sr ) +" s) x "+( zoom_x|0 );
 
-	draw_spectrum_moy( zoom_x>128, 0, "#a26" ); // TODO ajouter une config utilisateur pour les couleurs / style
-	draw_spectrum_moy( zoom_x>128, 1, "#078" );
+	draw_spectrum_moy( zoom_x>128, 0, config.colors.wave1 );
+	draw_spectrum_moy( zoom_x>128, 1, config.colors.wave2 );
 };
 
 
@@ -365,7 +406,7 @@ let redraw_overlay= _=>{
 	ctx2.lineTo(x1,h);
 	ctx2.stroke();
 
-	x1= sec_to_px(player.sel1);
+	x1= sec_to_px(selectors.sel1);
 	ctx2.strokeStyle="#08f5";
 	ctx2.beginPath();
 	ctx2.moveTo(x1,0);
@@ -382,10 +423,10 @@ let redraw_overlay= _=>{
 		ctx2.fillRect(x1, 0, x2-x1, h);
 	}
 
-	if( player.sel2!=null ){
+	if( selectors.sel2!=null ){
 
-		x1= sec_to_px(player.sel1);
-		x2= sec_to_px(player.sel2);
+		x1= sec_to_px(selectors.sel1);
+		x2= sec_to_px(selectors.sel2);
 
 		ctx2.fillStyle="#f402";
 
@@ -404,7 +445,7 @@ let redraw_overlay= _=>{
 };
 
 
-// TODO, lorsque selecteur debut à fin, et suppr, alors length (0)... faudrait avoir 1 pixel neutre
+
 // _menu_ | d_draw_spectrum_moy
 let draw_spectrum_moy= ( offsx, ch, strokeColor )=>{
 
@@ -447,7 +488,7 @@ function mouse_move(event){
 
 	if(!awb){return;}
 	player.hover_x= Math.max(0,Math.min(awb.duration, (zoom_x/sr)*(start/zoom_x+event.layerX) )); // à taton, et ça a marché
-	_sel("[title='Curseur'] .value").innerHTML= player.hover_x.toFixed(5);
+	_sel("[title='Curseur'] .value").innerHTML= sec_to_minsec(player.hover_x);
 
 	redraw_overlay();
 }
@@ -458,20 +499,21 @@ function mouse_move(event){
 function mouse_down(){
 
 	if( keyboard["Shift"] ){
-		if( player.hover_x<player.sel1 ){ // inversion
-			player.sel2= player.sel1;
+		if( player.hover_x<selectors.sel1 ){ // inversion
+			selectors.sel2= selectors.sel1;
 			_def_sel1_by_hover();
 		}else{
-			player.sel2= player.hover_x;
+			selectors.sel2= player.hover_x;
 		}
-		_sel("[title='Selecteur2'] .value").innerHTML= player.sel2.toFixed(5);
+		_sel("[title='Selecteur2'] .value").innerHTML= sec_to_minsec(selectors.sel2);
 		redraw_overlay();
 		return;
 	}
 	_def_sel1_by_hover();
-	player.sel2= null;
+	selectors.sel2= null;
 	_sel("[title='Selecteur2'] .value").innerHTML= '';
 	redraw_overlay();
+	if( g_src ){ direct_play(); direct_play(); } // switch off music
 }
 
 
@@ -481,7 +523,7 @@ function mouse_scroll(event) {
 
 	let mx= event.layerX/2|0;
 	event.preventDefault();
-	let dezoom= 1.8; // CONFIG puissance du zoom
+	let dezoom= config.zoom.power;
 	let offs_2= dezoom*2-2;
 	let mult_zoom= 0.9/dezoom;
 	let offs_1= (1-mult_zoom)*2;
@@ -494,7 +536,7 @@ function mouse_scroll(event) {
 	}else if(event.deltaY>0){
 		// dezoom
 		start= Math.max( 0, Math.round(start-mx*zoom_x*offs_2) );
-		zoom_x= zoom_x*dezoom; // +elargi
+		zoom_x= Math.min(600000,zoom_x*dezoom); // +elargi
 	}
 	redraw_onde();
 	redraw_overlay();
@@ -529,7 +571,7 @@ function press_key(event){
 
 		if( event.key=="a" ){ // code=KeyQ... key=a
 			if( keyboard["Control"] ){
-				selecteurs.all();
+				selectors.all();
 			}
 			return;
 		}
@@ -545,12 +587,12 @@ function press_key(event){
 		}
 
 		if( event.key=="Home" ){
-			selecteurs.home();
+			selectors.home();
 			return;
 		}
 
 		if( event.key=="End" ){
-			selecteurs.end();
+			selectors.end();
 			return;
 		}
 
@@ -579,6 +621,10 @@ function press_key(event){
 // _menu_ | v_load_a_file
 _sel("#f").onchange= e=>{
 
+	if( meta_in.name && !confirm("oublier la modification en cours?") ){
+		return;
+	}
+
 	let file=e.target.files[0];
 	if( !file ){ return; }
 	meta_in= {
@@ -604,10 +650,11 @@ _sel("#f").onchange= e=>{
 		redraw_onde();
 		mouse_move({layerX:0});
 		_sel('#import_file').blur(); // éviter d'ouvrir encore, au press space
-		_sel("[title='Longueur'] .value").innerHTML= awb.length/sr;
+		_sel("[title='Longueur'] .value").innerHTML= sec_to_minsec(awb.length/sr);
 		_sel("[title='Canaux'] .value").innerHTML= (vv=>vv<1?'0':vv<2?'Mono':vv<3?'Stereo':'Multi')(awb.numberOfChannels);
 
 		set_zoom_et_position(awb.length/sr*30,0); // reset position et zoom selon taille fichier
+		selectors.home();
 	};
 	r.readAsArrayBuffer(file);
 };
@@ -634,7 +681,7 @@ let direct_play= _=>{
 	// TODO au lieu d'injecter tout un canal, et de seek pour lire, lez go injecter juste ce qu'on prévoit de lire (genre 2 secondes de datas) et multicanaux
 	src.start( 0, player.son_geox+0.00000169 ); // play by position (mais impossible de recup la position en cours) + 0.00000169 pour offset perfect
 	g_src= src;   redraw_overlay();
-	_sel("[title='Lecteur'] .value").innerHTML= player.son_geox.toFixed(5);
+	_sel("[title='Lecteur'] .value").innerHTML= sec_to_minsec(player.son_geox);
 	setTimeout(_=>{ delete_preview_audio(null,src); }, player.son_dur*1000 );
 
 };
@@ -645,7 +692,7 @@ let direct_play= _=>{
 let delete_preview_audio= (osef,qui)=>{
 
 	qui &&( qui.stop(),   g_src!=null && qui.ptr_cnt==g_src.ptr_cnt? g_src= null: 0,   qui= null );
-	_sel("[title='Lecteur'] .value").innerHTML= player.son_geox.toFixed(5);
+	_sel("[title='Lecteur'] .value").innerHTML= sec_to_minsec(player.son_geox);
 	redraw_overlay();
 };
 
@@ -747,8 +794,8 @@ function writeString(view, offset, str) {
 
 let set_zoom_et_position= ( zoom=0.02, pos=sr*7.9993 )=>{
 
-	zoom_x= zoom;
-	start= pos;
+	zoom_x= zoom; // px
+	start= pos; // px
 	mouse_scroll({ deltaY: 0, layerX: 0, preventDefault: _=>{} })
 };
 
