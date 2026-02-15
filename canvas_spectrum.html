@@ -34,6 +34,7 @@ wow, idée, muter un canal
     <button id="ffBtn" title="Fast Forward">▶▶</button>
 	<button id="import_file">Importer audio</button>
 	<button id="exportWav">Export (.wav)</button>
+	<button id="exportLentWebm">Export (compressé mais lent)</button>
 	<button id="btn_add_dura_empty">Ajouter du vide</button>
   </div>
 </header>
@@ -203,6 +204,8 @@ let sec_to_pcm= sec=> Math.max( 0, Math.min( Math.floor( sec*sr )+1, awb.length 
 let to2= num=> num<10?"0"+num:num;
 
 let sec_to_minsec= sec=> to2(sec/60|0) +":"+ to2(sec%60|0) +( (sec%1).toFixed(5).replace(/^\-*0/,"").replace(/^(\.\d\d\d)/,"$1 ") );
+
+let isNumber= val=> !isNaN(parseFloat(val)) && isFinite(val);
 
 let _def_sel1_by_hover= _=>{   selectors.sel1= player.hover_x;   player.son_geox= selectors.sel1;   _sel("[title='Selecteur1'] .value").innerHTML= sec_to_minsec(selectors.sel1);   };
 
@@ -723,21 +726,63 @@ _sel('#import_file').addEventListener('click', _=>{
 // _menu_ | v_export
 _sel('#exportWav').addEventListener('click', _=>{
 
-	if( !confirm("save?") || !awb ){ return; }
+	if( !confirm("save lourd?") || !awb ){ return; }
+
 	// export WAV 16-bit interleaved
 	let wavBlob= audioBufferToWavBlob(awb);
 	let url= URL.createObjectURL(wavBlob);
 	let ta= document.createElement('a');
 	ta.href= url;
-	ta.download= meta_in.name+ " _ "+ Date.now() +".wav";
+	ta.download= meta_in.name +" _ "+ Date.now() +".wav";
 	ta.click();
 	URL.revokeObjectURL(url);
 });
 
 
 
+_sel('#exportLentWebm').addEventListener('click', _=>{
+
+	let bps= prompt("attention, save lente. Quelle qualité de sortie? (5000, 7000, 12000 ou 16000 32000 64000)",16000);
+	if( bps==null ){ return; } // todo, ptet ogg opus au lieu de webm pour avoir du 96kbps perfect
+	if( !isNumber(bps) ){ bps= 16000; }
+	bps= Math.max(5000,Math.min(64000,bps));
+	console.info("compression bps: "+bps);
+
+	const audioCtx= new AudioContext();
+	const destination= audioCtx.createMediaStreamDestination();
+	const lecteur= audioCtx.createBufferSource();
+	lecteur.buffer= awb; // ptr, flux final après mixage
+	lecteur.connect(destination);
+	lecteur.start(0);
+
+	// 2000(0.9ko/s 5khz) | 9000(1.4ko/s 6khz) , 12000(1.7ko/s 9khz) , 14000(2.2ko/s 20khz), 16000(2.4ko/s 20khz) 32000(4.3ko/s 20khz)
+	const mediaRecorder= new MediaRecorder(destination.stream, { mimeType: 'audio/webm; codecs=opus', audioBitsPerSecond: bps }); // très compressé
+
+	let recordedChunks= []; // stockage de Blob (nouvelles data audio compressés)
+
+	mediaRecorder.ondataavailable= event=>{ if( event.data.size>0 ){ recordedChunks.push(event.data); } };
+
+	mediaRecorder.onstop= _=>{
+		let lien=document.createElement('a');
+		lien.href= URL.createObjectURL( new Blob(recordedChunks, { type: "audio/webm" }) ); // url by blob datas
+		lien.download= meta_in.name +" _ "+ Date.now() +".webm"; // nom du fichier
+		lien.click();
+		// nettouyage de la ram :
+		lien= null;
+		recordedChunks= [];
+		// todo: deconnexion des destination et lecteur puis suppression
+	};
+
+	lecteur.onended= _=>{ mediaRecorder.stop(); }; // arreter l'enregistrement lorsque lecteur fini
+
+	mediaRecorder.start(); // lancer le processus d'enregistrement
+});
+
+
+
+
 // _menu_ | v_conv_to_wav
-function audioBufferToWavBlob(buffer) {
+function audioBufferToWavBlob(buffer){
 	// WAV conversion function (PCM16)
 	let numChannels= buffer.numberOfChannels;
 	let sampleRate= buffer.sampleRate;
