@@ -1,29 +1,101 @@
-<!doctype html><html><head><meta charset=utf-8><title>Spectrum (webapp audio editor) v1.8</title><style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif}   body{background:#111;color:#eee;user-select:none;}   canvas{border:1px solid #444}
-input{margin:10px}   input[type='file']{opacity:.3}   button{padding:.4em .6em;background:#323232;color:#ddd;border:0;border-radius:3px;}
-.zone_menu{display:flex;flex-direction:column;align-items:center;justify-content:center;}
-pre{position:absolute;left:1em;top:1em;padding:1em;width:13em;opacity:.8;height:1.25em;overflow:hidden;cursor:pointer;color:#4bf;}
-pre.show{width:calc(100vw - 2em);text-align:center;opacity:1;background:#222e;height:auto;color:#ccc;}
+<!doctype html><html><head><meta charset=utf-8><title>Spectrum (webapp audio editor) v2.2</title><style>
+:root{--bg:#0f1720;--panel:#0b1520;--accent:#2dd4bf;--muted:#fad;--track:#071126;--wave:#1fbfa6;--glass:#fff1;}
+body{background:#111;color:#eee;user-select:none;font-family:sans-serif;}   canvas{border:1px solid #444}
+header{padding:0 0 .4em 0;border-bottom:1px solid #fff2;}
+input{margin:10px}   input[type='file']{opacity:.3}   input[type="range"]{filter:invert(1);opacity:.5;}
+.flex{display:flex;} .flex_wrap{flex-wrap:wrap;} .justif_space{justify-content:space-between;} .y_center{align-items:center;}
+pre{position:absolute;left:14em;top:-.4em;padding:0;width:13em;opacity:.6;height:1.25em;overflow:hidden;cursor:pointer;color:#4bf;font-size:16px;}
+pre.show{left:1em;top:2.4em;width:calc(100vw - 2em);padding:0;text-align:center;opacity:1;background:#1c1c1cee;height:auto;color:#eee;}
+button{background:none;border:1px solid #fff3;margin:0 .5em;padding:.4em .77em .52em .8em;border-radius:5px;color:#aaa;cursor:pointer;}
+button:hover{border-color:#fff6;color:#fff}
+
+.track{position:relative;background:var(--track);margin-bottom:12px;}
+
+.waveform path{stroke:var(--wave);stroke-width:2;fill:rgba(31,191,166,0.4)}
+
+.minicard{width:9em;min-height:2em;border-radius:5px;background:var(--glass);text-align:center;padding:.5em 0;margin:.5em;border:1px solid #fff2;color:var(--muted);}
+.minicard .key{font-size:.88em;color:var(--muted)}
+.minicard .value{font-weight:600;color:#fff;font-size:13px;margin-top:4px}
+
+.card{background:#8881;padding:.2em;margin:.4em;border-radius:5px;border:1px solid #ccc2;}
+/*
+TODO revoir si pics (reperes duration)
+wow, idée, on pourrait poser des bandeaux d'info dans la musique juste pour memo ce qu'on a capté ou ce qu'on voudrait faire
+wow, idée, muter un canal
+*/
 </style></head><body>
-<div class="zone_menu">
-<div><input id=f type=file accept=audio style="display:none;"></div>
-<div><span id="infos"></span></div>
-<div><span id="info_hover_x"></span></div>
-<div><span id="info_sel1"></span><span id="info_sel2"></span></div>
-<div><span id="info_son_geox"></span></div>
-<div>
-<button id="import_file">Importer audio</button> &nbsp;
-<button id="exportWav">Export (.wav)</button> &nbsp;
-<button id="btn_add_dura_empty">Ajouter du vide</button> &nbsp;
+
+<header class="flex flex_wrap justif_space">
+  <div class="flex y_center"><span>Spectrum v1.6</span></div>
+  <div>
+    <button id="playBtn" title="Play-Pause">▶︎</button>
+    <button id="stopBtn" title="Stop">■</button>
+    <button id="rwBtn" title="Rewind">◀◀</button>
+    <button id="ffBtn" title="Fast Forward">▶▶</button>
+	<button id="import_file">Importer audio</button>
+	<button id="exportWav">Export (.wav)</button>
+	<button id="btn_add_dura_empty">Ajouter du vide</button>
+  </div>
+</header>
+
+
+<div class="flex flex_wrap justif_space">
+
+  <div class="card">
+    <div class="minicard" title="Titre">
+      <div class="key">Titre</div>
+      <div class="value">exemple.mp3</div>
+    </div>
+    <div class="minicard" title="Longueur">
+      <div class="key">Longueur</div>
+      <div class="value">03:02.001 234</div>
+    </div>
+    <div class="minicard" title="Canaux">
+      <div class="key">Canaux</div>
+      <div class="value">Mono</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="minicard" title="Curseur">
+      <div class="key">Curseur</div>
+      <div class="value">02:21.160 654</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="minicard" title="Lecteur">
+      <div class="key">Lecteur</div>
+      <div class="value">03:20.120 444</div>
+    </div>
+    <div class="minicard" title="Selecteur1">
+      <div class="key">Selecteur 1</div>
+      <div class="value">02:17.160 654</div>
+    </div>
+    <div class="minicard" title="Selecteur2">
+      <div class="key">Selecteur 2</div>
+      <div class="value">02:41.160 654</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Navigation</h3>
+	<div class="flex flex_wrap y_center"><div>Zoom</div><div><input type="range" min="-12" max="12" value="0" aria-label="Low"></div></div>
+	<div class="flex flex_wrap y_center"><div>Lecteur</div><div><input type="range" min="-12" max="12" value="0" aria-label="Low"></div></div>
+	<div><span id="infos"></span></div>
+  </div>
+
 </div>
-</div>
+
+<input id=f type=file accept=audio style="display:none;">
 <canvas id=c width=1600 height=600 style="position:absolute;left:calc(50vw - 800px);bottom:1em;"></canvas>
 <canvas id=d width=1600 height=600 style="position:absolute;left:calc(50vw - 800px);bottom:1em;"></canvas>
-<pre onclick="this.classList.toggle('show');">
-(mini doc utilisateur)
+
+<pre onclick="this.classList.toggle('show');">(mini doc utilisateur)
 
 Spectrum permet d'exporter en wav, un fichier contenant 1 à 2 canaux audio, dont on va éditer le contenu.
 
+> [F11] activer/désactiver le mode plein écran
 > [scroll] pour zoomer et dezoomer (avec centrage recalculé)
 > [espace] pour écouter 2 secondes (seon position selecteur)
 > touches [gauche] et [droite] pour déplacer le lecteur temporaire (et autoplay)
@@ -40,9 +112,14 @@ Spectrum permet d'exporter en wav, un fichier contenant 1 à 2 canaux audio, don
 /!\ pas de ctrl+z pour le moment, donc faisez gaff hein
 ne lisez surtout pas le code source, ça va vous spoil pour la suite xD
 
-80% by msnbrest, 20% (base et aides) créé par www.perplexity.ai : salut, peux tu coder une mini page html et javascript, css darkmode, en golf code.
-le but est d'ouvrir un fichier audio ogg, puis afficher dans un canvas la puissance du son (un pixel chaque seconde, sans calcul de moyenne), juste une preview rapide. et en commentaire peux tu décrire en quelques lignes comment aurait du etre un canvas pour afficher un analyseur de frequence
+80% by msnbrest, 20% (base et aides) créé par www.perplexity.ai :
+salut, peux tu coder une mini page html et javascript, css darkmode, en golf code.
+le but est d'ouvrir un fichier audio ogg, puis afficher dans un canvas la puissance
+du son (un pixel chaque seconde, sans calcul de moyenne), juste une preview rapide.
+et en commentaire peux tu décrire en quelques lignes comment aurait du etre
+un canvas pour afficher un analyseur de frequence
 </pre>
+
 <script>
 /*
 _menu_
@@ -79,10 +156,18 @@ v_create_wav_header
 end_of_functions
 */
 
-let c= document.querySelector("#c"),
-d= document.querySelector("#d");
+// TODO dans Navigation, lorsque scroll alors update auto input
+// et lorsque edit human input alors update display zoom
+// pareil pour position lecteur.
+
 //TODO refacto selecteur en selector et move sel1 sel2 dans clipboard,  et c, et d
-let aa, g_src, workingBuffer, sr, meta_in= {}, start=0, w=c.width, w2=c.width/2|0, h=c.height, h2=c.height/2|0, zoom_y=1, zoom_x=30*64,
+
+let _sel= sel=> document.querySelector(sel),
+c= _sel("#c"),
+d= _sel("#d");
+
+let aa, g_src, awb, sr=48000, meta_in= {}, start=0, w=c.width, w2=c.width/2|0, zoom_y=1, zoom_x=30*64,
+h=c.height, h25=c.height*0.25|0, h50=c.height*0.5|0, h75=c.height*0.75|0,
 player= {
 	hover_x: 0, // position geographique du pointeur de selection en seconde
 	sel1: 0, // position selecteur reel 1 en seconde
@@ -107,35 +192,35 @@ TODO test: normaliser le son et virer le bug 0204 "/tech dance/David Guetta - In
 // _menu_ | tiny_functions
 let sec_to_px= sec=> Math.floor( (sec-start/sr)*(sr/zoom_x) );
 
-let sec_to_pcm= sec=> Math.max( 0, Math.min( Math.floor( sec*sr )+1, workingBuffer.length ) );
+let sec_to_pcm= sec=> Math.max( 0, Math.min( Math.floor( sec*sr )+1, awb.length ) );
 
-let _def_sel1_by_hover= _=>{   player.sel1= player.hover_x;   player.son_geox= player.sel1;   document.querySelector("#info_sel1").innerHTML= `sel: ${ player.sel1.toFixed(5) } s`;   };
+let _def_sel1_by_hover= _=>{   player.sel1= player.hover_x;   player.son_geox= player.sel1;   _sel("[title='Selecteur1'] .value").innerHTML= player.sel1.toFixed(5);   };
 
 
 
 // _menu_ | e_add_dura_empty
-document.querySelector('#btn_add_dura_empty').addEventListener('click', _=>{
+_sel('#btn_add_dura_empty').addEventListener('click', _=>{
 
 	let insert_duration= sec_to_pcm( player.sel2==null ? 1 : player.sel2-player.sel1 );
 	let insert_at= sec_to_pcm(player.sel1);
 	let t_data;
 
-	let new_buf= aa.createBuffer(workingBuffer.numberOfChannels, workingBuffer.length + insert_duration, sr);
+	let new_buf= aa.createBuffer(awb.numberOfChannels, awb.length + insert_duration, sr);
 
 	// canal 0
 	t_data= new_buf.getChannelData(0);
-	t_data.set(workingBuffer.getChannelData(0).subarray(0, insert_at), 0); // old part 1
+	t_data.set(awb.getChannelData(0).subarray(0, insert_at), 0); // old part 1
 	t_data.set(new Float32Array(insert_duration), insert_at); // new part
-	t_data.set(workingBuffer.getChannelData(0).subarray(insert_at), insert_at + insert_duration); // old part 2
+	t_data.set(awb.getChannelData(0).subarray(insert_at), insert_at + insert_duration); // old part 2
 
 	// canal 1
-	if( workingBuffer.numberOfChannels>1 ){
+	if( awb.numberOfChannels>1 ){
 		t_data= new_buf.getChannelData(1);
-		t_data.set(workingBuffer.getChannelData(1).subarray(0, insert_at), 0); // old part 1
+		t_data.set(awb.getChannelData(1).subarray(0, insert_at), 0); // old part 1
 		t_data.set(new Float32Array(insert_duration), insert_at); // new part
-		t_data.set(workingBuffer.getChannelData(1).subarray(insert_at), insert_at + insert_duration); // old part 2
+		t_data.set(awb.getChannelData(1).subarray(insert_at), insert_at + insert_duration); // old part 2
 	}
-	workingBuffer= new_buf;
+	awb= new_buf;
 	redraw_onde();
 });
 
@@ -152,20 +237,20 @@ let f_remove= _=>{
 	let del_at= sec_to_pcm(player.sel1);
 	let t_data;
 
-	let new_buf= aa.createBuffer(workingBuffer.numberOfChannels, workingBuffer.length - del_duration, sr);
+	let new_buf= aa.createBuffer(awb.numberOfChannels, awb.length - del_duration, sr);
 
 	// canal 0
 	t_data= new_buf.getChannelData(0);
-	t_data.set(workingBuffer.getChannelData(0).subarray(0, del_at), 0); // old part 1
-	t_data.set(workingBuffer.getChannelData(0).subarray(del_at + del_duration), del_at); // old part 2
+	t_data.set(awb.getChannelData(0).subarray(0, del_at), 0); // old part 1
+	t_data.set(awb.getChannelData(0).subarray(del_at + del_duration), del_at); // old part 2
 
 	// canal 1
-	if( workingBuffer.numberOfChannels>1 ){
+	if( awb.numberOfChannels>1 ){
 		t_data= new_buf.getChannelData(1);
-		t_data.set(workingBuffer.getChannelData(1).subarray(0, del_at), 0); // old part 1
-		t_data.set(workingBuffer.getChannelData(1).subarray(del_at + del_duration), del_at); // old part 2
+		t_data.set(awb.getChannelData(1).subarray(0, del_at), 0); // old part 1
+		t_data.set(awb.getChannelData(1).subarray(del_at + del_duration), del_at); // old part 2
 	}
-	workingBuffer= new_buf;
+	awb= new_buf;
 	redraw_onde();
 };
 
@@ -182,7 +267,7 @@ let selecteurs= {
 
 	end: _=>{
 
-		player.hover_x= workingBuffer.length/48000-0.000013;
+		player.hover_x= awb.length/sr-0.000013;
 		mouse_down();
 	},
 
@@ -190,8 +275,8 @@ let selecteurs= {
 
 		player.hover_x= -0.0000002; // besoin d'un nombre légèrement negatif sec pour coller avant pixel (car selection parfaite)
 		_def_sel1_by_hover();
-		player.sel2= workingBuffer.length/48000-0.000013;
-		document.querySelector("#info_sel2").innerHTML= ` | sel: ${ player.sel2.toFixed(5) } s`;
+		player.sel2= awb.length/sr-0.000013;
+		_sel("[title='Selecteur2'] .value").innerHTML= player.sel2.toFixed(5);
 		redraw_overlay();
 	}
 };
@@ -215,37 +300,37 @@ let clipboard={
 
 		clipboard.dur= sec_to_pcm( player.sel2-player.sel1 );
 
-		clipboard.buffer= aa.createBuffer(workingBuffer.numberOfChannels, clipboard.dur, sr);
+		clipboard.buffer= aa.createBuffer(awb.numberOfChannels, clipboard.dur, sr);
 
 		t_data= clipboard.buffer.getChannelData(0);
-		t_data.set(workingBuffer.getChannelData(0).subarray(at, at + clipboard.dur), 0); // old part
+		t_data.set(awb.getChannelData(0).subarray(at, at + clipboard.dur), 0); // old part
 
 		t_data= clipboard.buffer.getChannelData(1);
-		t_data.set(workingBuffer.getChannelData(1).subarray(at, at + clipboard.dur), 0); // old part
+		t_data.set(awb.getChannelData(1).subarray(at, at + clipboard.dur), 0); // old part
 	},
 
 	paste: _=>{
 
 		let t_data;
 
-		let new_buf= aa.createBuffer(workingBuffer.numberOfChannels, workingBuffer.length + clipboard.dur, sr);
+		let new_buf= aa.createBuffer(awb.numberOfChannels, awb.length + clipboard.dur, sr);
 		let at= sec_to_pcm(player.sel1);
 
 		// canal 0
 		t_data= new_buf.getChannelData(0);
-		t_data.set(workingBuffer.getChannelData(0).subarray(0, at), 0); // old part 1
+		t_data.set(awb.getChannelData(0).subarray(0, at), 0); // old part 1
 		t_data.set(clipboard.buffer.getChannelData(0), at); // new part
-		t_data.set(workingBuffer.getChannelData(0).subarray(at), at + clipboard.dur); // old part 2
+		t_data.set(awb.getChannelData(0).subarray(at), at + clipboard.dur); // old part 2
 
 		// canal 1
-		if( workingBuffer.numberOfChannels>1 ){
+		if( awb.numberOfChannels>1 ){
 			t_data= new_buf.getChannelData(1);
-			t_data.set(workingBuffer.getChannelData(1).subarray(0, at), 0); // old part 1
+			t_data.set(awb.getChannelData(1).subarray(0, at), 0); // old part 1
 			t_data.set(clipboard.buffer.getChannelData(1), at); // new part
-			t_data.set(workingBuffer.getChannelData(1).subarray(at), at + clipboard.dur); // old part 2
+			t_data.set(awb.getChannelData(1).subarray(at), at + clipboard.dur); // old part 2
 		}
 
-		workingBuffer= new_buf;
+		awb= new_buf;
 		redraw_onde();
 
 	}
@@ -256,14 +341,13 @@ let clipboard={
 // _menu_ | d_redraw_onde
 let redraw_onde= _=>{
 
-	if( !workingBuffer ){ return; }
+	if( !awb ){ return; }
 	ctx1.clearRect(0,0,w,h);
-	ctx1.strokeStyle="#f2b";
-	ctx1.fillStyle="#fff";
-	document.querySelector("#infos").innerHTML= "de "+ start +" ("+( start/sr*2 ).toFixed(3)+"s à "+( (start+zoom_x*w2)/sr*2 ).toFixed(3)+"s) x "+( zoom_x|0 );
 
-	draw_spectrum_moy( zoom_x>128, 0 );
-	draw_spectrum_moy( zoom_x>128, 1 );
+	_sel("#infos").innerHTML= "de "+ start +" ("+( start/sr*2 ).toFixed(3)+"s à "+( (start+zoom_x*w2)/sr*2 ).toFixed(3)+"s) x "+( zoom_x|0 );
+
+	draw_spectrum_moy( zoom_x>128, 0, "#a26" ); // TODO ajouter une config utilisateur pour les couleurs / style
+	draw_spectrum_moy( zoom_x>128, 1, "#078" );
 };
 
 
@@ -320,14 +404,17 @@ let redraw_overlay= _=>{
 };
 
 
-
+// TODO, lorsque selecteur debut à fin, et suppr, alors length (0)... faudrait avoir 1 pixel neutre
 // _menu_ | d_draw_spectrum_moy
-let draw_spectrum_moy= (offsx,ch)=>{
+let draw_spectrum_moy= ( offsx, ch, strokeColor )=>{
 
 	let bascu= 0;
+	ctx1.strokeStyle= strokeColor;
+	ctx1.fillStyle= "#fff";
+	ctx1.strokeWeight= "2px";
 	ctx1.beginPath();
-	ctx1.moveTo(0,h2+ch*0.5);
-	let dataz= workingBuffer.getChannelData(ch);
+	ctx1.moveTo( 0, h25+(ch*h50) );
+	let dataz= awb.getChannelData(ch);
 	for( let tk=0; tk<w; tk++ ){
 
 		if( offsx ){
@@ -340,13 +427,13 @@ let draw_spectrum_moy= (offsx,ch)=>{
 			if( l+5*128>=dataz.length ){ tk=w; continue; }; m= Math.max(m,Math.abs(dataz[l+5*128]));
 			if( l+6*128>=dataz.length ){ tk=w; continue; }; m= Math.max(m,Math.abs(dataz[l+6*128]));
 			if( l+7*128>=dataz.length ){ tk=w; continue; }; m= Math.max(m,Math.abs(dataz[l+7*128]));
-			ctx1.lineTo(tk,h2+ch*0.5+((bascu?-m:m)*h2*zoom_y));
+			ctx1.lineTo( tk, h25+(ch*h50)+((bascu?-m:m)*h50*zoom_y) );
 			bascu= 1-bascu;
 		}else{
 			let l= Math.round( start+tk*zoom_x );
 			if( l>=dataz.length )continue;
 			m= dataz[l];
-			ctx1.lineTo(tk,h2+ch*0.5+(m*h2*zoom_y));
+			ctx1.lineTo( tk, h25+(ch*h50)+(m*h50*zoom_y) );
 		}
 
 	}
@@ -358,9 +445,9 @@ let draw_spectrum_moy= (offsx,ch)=>{
 // _menu_ | u_mouse_move
 function mouse_move(event){
 
-	if(!workingBuffer){return;}
-	player.hover_x= Math.max(0,Math.min(workingBuffer.duration, (zoom_x/sr)*(start/zoom_x+event.layerX) )); // à taton, et ça a marché
-	document.querySelector("#info_hover_x").innerHTML= `cur: ${ player.hover_x.toFixed(5) } s`;
+	if(!awb){return;}
+	player.hover_x= Math.max(0,Math.min(awb.duration, (zoom_x/sr)*(start/zoom_x+event.layerX) )); // à taton, et ça a marché
+	_sel("[title='Curseur'] .value").innerHTML= player.hover_x.toFixed(5);
 
 	redraw_overlay();
 }
@@ -377,13 +464,13 @@ function mouse_down(){
 		}else{
 			player.sel2= player.hover_x;
 		}
-		document.querySelector("#info_sel2").innerHTML= ` | sel: ${ player.sel2.toFixed(5) } s`;
+		_sel("[title='Selecteur2'] .value").innerHTML= player.sel2.toFixed(5);
 		redraw_overlay();
 		return;
 	}
 	_def_sel1_by_hover();
 	player.sel2= null;
-	document.querySelector("#info_sel2").innerHTML= ``;
+	_sel("[title='Selecteur2'] .value").innerHTML= '';
 	redraw_overlay();
 }
 
@@ -399,11 +486,12 @@ function mouse_scroll(event) {
 	let mult_zoom= 0.9/dezoom;
 	let offs_1= (1-mult_zoom)*2;
 
+	// cool, if event.deltaY == 0, redraw juste.
 	if(event.deltaY<0){
 		// zoom
 		start+= Math.round( mx*zoom_x*offs_1 );
 		zoom_x= Math.max(0.03,zoom_x*mult_zoom); // +precis
-	}else{
+	}else if(event.deltaY>0){
 		// dezoom
 		start= Math.max( 0, Math.round(start-mx*zoom_x*offs_2) );
 		zoom_x= zoom_x*dezoom; // +elargi
@@ -467,7 +555,7 @@ function press_key(event){
 		}
 
 		if( event.key=="ArrowLeft" ){ // TODO warn, quand je spam a mort les touches et que ça play, bah au bout d'un moment y'a saturation gestion pendant qq secondes
-			if(!workingBuffer){return;}
+			if(!awb){return;}
 			player.son_geox= Math.max( 0, player.son_geox-1 );
 			if( g_src ){ direct_play(); } // switch off music
 			direct_play();
@@ -475,8 +563,8 @@ function press_key(event){
 		}
 
 		if( event.key=="ArrowRight" ){
-			if(!workingBuffer){return;}
-			player.son_geox= Math.min( workingBuffer.duration, player.son_geox+1 );
+			if(!awb){return;}
+			player.son_geox= Math.min( awb.duration, player.son_geox+1 );
 			if( g_src ){ direct_play(); } // switch off music
 			direct_play();
 			return;
@@ -489,7 +577,7 @@ function press_key(event){
 
 
 // _menu_ | v_load_a_file
-document.querySelector("#f").onchange= e=>{
+_sel("#f").onchange= e=>{
 
 	let file=e.target.files[0];
 	if( !file ){ return; }
@@ -500,21 +588,26 @@ document.querySelector("#f").onchange= e=>{
 		lastModified: file.lastModified,
 	};
 
+	_sel("[title='Titre'] .value").innerHTML= meta_in.name;
+
 	let r=new FileReader();
 	r.onload=async e=>{
 
 		if(!aa)aa= new AudioContext();
 		let tmp_buffer= await aa.decodeAudioData( e.target.result );
 		sr= tmp_buffer.sampleRate; // 48000
-		//workingBuffer= cloneAudioBuffer(tmp_buffer);
-		workingBuffer= tmp_buffer;
-		if( workingBuffer.numberOfChannels<1 || workingBuffer.numberOfChannels>2 ){
-			alert("le nombre de canaux ("+ workingBuffer.numberOfChannels +") va poser probleme lors des traitements");
+		//awb= cloneAudioBuffer(tmp_buffer);
+		awb= tmp_buffer;
+		if( awb.numberOfChannels<1 || awb.numberOfChannels>2 ){
+			alert("le nombre de canaux ("+ awb.numberOfChannels +") va poser probleme lors des traitements");
 		}
-		document.querySelector("#info_sel1").innerHTML= `Nombre de canaux: ${ workingBuffer.numberOfChannels }`;
 		redraw_onde();
 		mouse_move({layerX:0});
-		document.querySelector('#import_file').blur(); // éviter d'ouvrir encore, au press space
+		_sel('#import_file').blur(); // éviter d'ouvrir encore, au press space
+		_sel("[title='Longueur'] .value").innerHTML= awb.length/sr;
+		_sel("[title='Canaux'] .value").innerHTML= (vv=>vv<1?'0':vv<2?'Mono':vv<3?'Stereo':'Multi')(awb.numberOfChannels);
+
+		set_zoom_et_position(awb.length/sr*30,0); // reset position et zoom selon taille fichier
 	};
 	r.readAsArrayBuffer(file);
 };
@@ -526,22 +619,22 @@ let direct_play= _=>{
 
 	// cette fonction declenche un mini lecteur de quelques secondes car ptin c'est horrible de faire un lecteur sympa
 
-	if( !workingBuffer ){ return; }
+	if( !awb ){ return; }
 	if( g_src ){   delete_preview_audio(null,g_src);   return;   }
 
 	let src= aa.createBufferSource();
 	src.ptr_cnt= player.ptr_cnt;
 	player.ptr_cnt++;
 
-	let playerBuf= aa.createBuffer(workingBuffer.numberOfChannels, workingBuffer.length, workingBuffer.sampleRate);
-	for( let ch=0; ch<workingBuffer.numberOfChannels; ch++ ){ playerBuf.getChannelData(ch).set(workingBuffer.getChannelData(ch)); }
+	let playerBuf= aa.createBuffer(awb.numberOfChannels, awb.length, awb.sampleRate);
+	for( let ch=0; ch<awb.numberOfChannels; ch++ ){ playerBuf.getChannelData(ch).set(awb.getChannelData(ch)); }
 
 	src.buffer= playerBuf; // importe le buffer Modifié
 	src.connect(aa.destination);
 	// TODO au lieu d'injecter tout un canal, et de seek pour lire, lez go injecter juste ce qu'on prévoit de lire (genre 2 secondes de datas) et multicanaux
 	src.start( 0, player.son_geox+0.00000169 ); // play by position (mais impossible de recup la position en cours) + 0.00000169 pour offset perfect
 	g_src= src;   redraw_overlay();
-	document.querySelector("#info_son_geox").innerHTML= `tmp play: ${ player.son_geox.toFixed(5) } s`;
+	_sel("[title='Lecteur'] .value").innerHTML= player.son_geox.toFixed(5);
 	setTimeout(_=>{ delete_preview_audio(null,src); }, player.son_dur*1000 );
 
 };
@@ -552,25 +645,40 @@ let direct_play= _=>{
 let delete_preview_audio= (osef,qui)=>{
 
 	qui &&( qui.stop(),   g_src!=null && qui.ptr_cnt==g_src.ptr_cnt? g_src= null: 0,   qui= null );
-	document.querySelector("#info_son_geox").innerHTML= ``;
+	_sel("[title='Lecteur'] .value").innerHTML= player.son_geox.toFixed(5);
 	redraw_overlay();
 };
 
 
 
+_sel('#playBtn').addEventListener('click', _=>{
+	press_key({type:"keydown",key:" "});press_key({type:"keyup",key:" "});
+});
+_sel('#stopBtn').addEventListener('click', _=>{
+	if( g_src ){ direct_play(); } // switch off music
+});
+_sel('#rwBtn').addEventListener('click', _=>{
+	press_key({type:"keydown",key:"ArrowLeft"});press_key({type:"keyup",key:"ArrowLeft"});
+});
+_sel('#ffBtn').addEventListener('click', _=>{
+	press_key({type:"keydown",key:"ArrowRight"});press_key({type:"keyup",key:"ArrowRight"});
+});
+
+
+
 // _menu_ | v_import
-document.querySelector('#import_file').addEventListener('click', _=>{
-	document.querySelector('#f').click();
+_sel('#import_file').addEventListener('click', _=>{
+	_sel('#f').click();
 });
 
 
 
 // _menu_ | v_export
-document.querySelector('#exportWav').addEventListener('click', _=>{
+_sel('#exportWav').addEventListener('click', _=>{
 
-	if( !confirm("save?") || !workingBuffer ){ return; }
+	if( !confirm("save?") || !awb ){ return; }
 	// export WAV 16-bit interleaved
-	let wavBlob= audioBufferToWavBlob(workingBuffer);
+	let wavBlob= audioBufferToWavBlob(awb);
 	let url= URL.createObjectURL(wavBlob);
 	let ta= document.createElement('a');
 	ta.href= url;
@@ -635,6 +743,15 @@ function writeString(view, offset, str) {
 	for( let i=0;i<str.length;i++ ){ view.setUint8(offset + i, str.charCodeAt(i)); }
 }
 
+
+
+let set_zoom_et_position= ( zoom=0.02, pos=sr*7.9993 )=>{
+
+	zoom_x= zoom;
+	start= pos;
+	mouse_scroll({ deltaY: 0, layerX: 0, preventDefault: _=>{} })
+};
+
 // effet montée (choix volume -60db & -48db)
 // effet descente (choix volume -60db & -48db)
 // normalisation de toute la zone
@@ -645,14 +762,7 @@ function writeString(view, offset, str) {
 // limiter position visuelle de fin, pas hors écran quoi
 // touche pour reset zoom x y total
 // faire un script qui detek les bugs, genre olala y'a du son ça bouge et d'un coup vide   ou   y'a des frequences, et d'un coup un tic
-
-/*
-// xD aller à la fin
-zoom_x= 0.02;
-start= 48000*7.9993;
-mouse_scroll({ deltaY: -7, layerX: 1000, preventDefault: _=>{} })
-*/
-
+// joli curseur ?
 
 
 // fleme ctrl x
