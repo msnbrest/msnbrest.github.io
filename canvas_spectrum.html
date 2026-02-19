@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf-8><title>Spectrum (webapp audio editor) v2.4</title><style>
+<!doctype html><html><head><meta charset=utf-8><title>Spectrum (webapp audio editor) v2.7</title><style>
 :root{--bg:#0f1720;--panel:#0b1520;--accent:#2dd4bf;--muted:#fad;--track:#071126;--wave:#1fbfa6;--glass:#fff1;}
 body{background:#111;color:#eee;user-select:none;font-family:sans-serif;}   canvas{border:1px solid #444}
 header{padding:0 0 .4em 0;border-bottom:1px solid #fff2;}
@@ -19,9 +19,13 @@ button:hover{border-color:#fff6;color:#fff}
 
 .card{background:#8881;padding:.2em;margin:.4em;border-radius:5px;border:1px solid #ccc2;}
 /*
-TODO revoir si pics (reperes duration)
-wow, idée, on pourrait poser des bandeaux d'info dans la musique juste pour memo ce qu'on a capté ou ce qu'on voudrait faire
-wow, idée, muter un canal
+
+TODO gui, revoir si pics (reperes duration)
+TODO gui, wow, idée, on pourrait poser des bandeaux d'info dans la musique juste pour memo ce qu'on a capté ou ce qu'on voudrait faire
+TODO wow, idée, muter un canal à l'écoute
+TODO selectionner un canal pour l'éditer
+TODO pouvoir editer un pixel lorsque move y, et un bouton switch pour éditer plusieurs lorsque move x
+TODO un algo pour smooth une selection (genre éviter les variations trop absurde entre deux pixels selon variation d'autour
 */
 </style></head><body>
 
@@ -34,8 +38,10 @@ wow, idée, muter un canal
     <button id="ffBtn" title="Fast Forward">▶▶</button>
 	<button id="import_file">Importer audio</button>
 	<button id="exportWav">Export (.wav)</button>
-	<button id="exportLentWebm">Export (compressé mais lent)</button>
+	<button id="exportLent">Export (compressé mais lent)</button>
 	<button id="btn_add_dura_empty">Ajouter du vide</button>
+	<button id="btn_volume">Volume</button>
+	<button id="btn_analyse_freq">Analyser 5 secondes</button>
   </div>
 </header>
 
@@ -113,6 +119,8 @@ Spectrum permet d'exporter en wav, un fichier contenant 1 à 2 canaux audio, don
 /!\ pas de ctrl+z pour le moment, donc faisez gaff hein
 ne lisez surtout pas le code source, ça va vous spoil pour la suite xD
 
+analyseur de spectre v1, avec forcage des valeurs faible, mais bon jconnais pas les frequences affichées
+
 80% by msnbrest, 20% (base et aides) créé par www.perplexity.ai :
 salut, peux tu coder une mini page html et javascript, css darkmode, en golf code.
 le but est d'ouvrir un fichier audio ogg, puis afficher dans un canvas la puissance
@@ -129,6 +137,8 @@ tiny_functions
 
 edit:
 e_add_dura_empty
+e_volume
+e_analyse_freq
 e_del_zone
 o_selectors
 o_clipboard
@@ -147,6 +157,8 @@ u_press_key
 
 wave:
 v_load_a_file
+d_drawSpectrum
+d_colo_by_amp
 v_play_now
 v_del_mem_player
 v_import
@@ -173,6 +185,7 @@ player= {
 	son_dur: 2, // duree de lecture du temporaire en seconde
 	ptr_cnt: 0,
 	audio_oqp: 0,
+	auto_seek: 0,
 },
 config={ // TODO config modifiable
 	colors:{
@@ -214,28 +227,71 @@ let _def_sel1_by_hover= _=>{   selectors.sel1= player.hover_x;   player.son_geox
 // _menu_ | e_add_dura_empty
 _sel('#btn_add_dura_empty').addEventListener('click', _=>{
 
-	let insert_duration= sec_to_pcm( selectors.sel2==null ? 1 : selectors.sel2-selectors.sel1 );
-	let insert_at= sec_to_pcm(selectors.sel1);
+	let t_dur= sec_to_pcm( selectors.sel2==null ? 1 : selectors.sel2-selectors.sel1 );
+	let t_at= sec_to_pcm(selectors.sel1);
 	let t_data;
 
-	let new_buf= aa.createBuffer(awb.numberOfChannels, awb.length + insert_duration, sr);
+	let new_buf= aa.createBuffer(awb.numberOfChannels, awb.length + t_dur, sr);
 
 	// canal 0
 	t_data= new_buf.getChannelData(0);
-	t_data.set(awb.getChannelData(0).subarray(0, insert_at), 0); // old part 1
-	t_data.set(new Float32Array(insert_duration), insert_at); // new part
-	t_data.set(awb.getChannelData(0).subarray(insert_at), insert_at + insert_duration); // old part 2
+	t_data.set(awb.getChannelData(0).subarray(0, t_at), 0); // old part 1
+	t_data.set(new Float32Array(t_dur), t_at); // new part
+	t_data.set(awb.getChannelData(0).subarray(t_at), t_at + t_dur); // old part 2
 
 	// canal 1
 	if( awb.numberOfChannels>1 ){
 		t_data= new_buf.getChannelData(1);
-		t_data.set(awb.getChannelData(1).subarray(0, insert_at), 0); // old part 1
-		t_data.set(new Float32Array(insert_duration), insert_at); // new part
-		t_data.set(awb.getChannelData(1).subarray(insert_at), insert_at + insert_duration); // old part 2
+		t_data.set(awb.getChannelData(1).subarray(0, t_at), 0); // old part 1
+		t_data.set(new Float32Array(t_dur), t_at); // new part
+		t_data.set(awb.getChannelData(1).subarray(t_at), t_at + t_dur); // old part 2
 	}
 	awb= new_buf;
 	redraw_onde();
 });
+
+
+
+// _menu_ | e_volume
+let f_volume= _=>{
+
+	if( selectors.sel2==null ){ return; }
+
+	let vol_1= prompt("Multiplicateur de volume pour le début (0 à 6M)",4);
+	if( !isNumber(vol_1) || vol_1<0 ){ vol_1= null; }
+	if( vol_1==null ){ return; }
+	vol_1= Math.min(vol_1,67108864);
+
+	let vol_2= prompt("Multiplicateur de volume pour la fin (0 à 6M)",vol_1);
+	if( !isNumber(vol_2) || vol_2<0 ){ vol_2= null; }
+	if( vol_2==null ){ return; }
+	vol_2= Math.min(vol_2,67108864);
+
+	vol_2= vol_2-vol_1; // vol_2 devient un offset
+
+	let m_debut= sec_to_pcm(selectors.sel1);
+	let t_cur= m_debut;
+	let t_max= sec_to_pcm(selectors.sel2)+1;
+	let m_offset= t_max-m_debut;
+	let can0= awb.getChannelData(0);
+	let can1= awb.getChannelData(1);
+	let tmp_v= 0.0;
+	while( t_cur<t_max ){
+		tmp_v= vol_1+vol_2*(t_cur-m_debut)/m_offset;
+		can0[t_cur]= Math.max(-1,Math.min(can0[t_cur]*tmp_v,1));
+		can1[t_cur]= Math.max(-1,Math.min(can1[t_cur]*tmp_v,1));
+		t_cur++;
+	}
+	redraw_onde();
+};
+
+
+
+// _menu_ | e_analyse_freq
+let f_analyse_freq= _=>{
+
+	console.info("ok");
+};
 
 
 
@@ -494,7 +550,24 @@ function mouse_move(event){
 	_sel("[title='Curseur'] .value").innerHTML= sec_to_minsec(player.hover_x);
 
 	redraw_overlay();
+	drawSpectrum();
 }
+
+
+
+let maybe_spectrum= _=>{
+	requestAnimationFrame(maybe_spectrum);
+
+	if( !g_src ){ return; }
+
+	if( player.auto_seek!=0 && Date.now()-player.auto_seek>=1000 ){
+		player.auto_seek+= (Date.now()-player.auto_seek);
+		press_key({type:"keydown",key:"ArrowRight"});press_key({type:"keyup",key:"ArrowRight"});
+	}
+	let pos_ptet_sec= g_src.startat + (Date.now()-g_src.startnow)/1000; // je suppute que le player se trouve ici
+	redraw_overlay();
+	drawSpectrum( pos_ptet_sec );
+};
 
 
 
@@ -516,7 +589,7 @@ function mouse_down(){
 	selectors.sel2= null;
 	_sel("[title='Selecteur2'] .value").innerHTML= '';
 	redraw_overlay();
-	if( g_src ){ direct_play(); direct_play(); } // switch off music
+	if( g_src ){ direct_play(0); direct_play(0); } // switch off music
 }
 
 
@@ -580,7 +653,7 @@ function press_key(event){
 		}
 
 		if( event.key==" " ){
-			direct_play();
+			direct_play(1);
 			return;
 		}
 
@@ -602,16 +675,16 @@ function press_key(event){
 		if( event.key=="ArrowLeft" ){ // TODO warn, quand je spam a mort les touches et que ça play, bah au bout d'un moment y'a saturation gestion pendant qq secondes
 			if(!awb){return;}
 			player.son_geox= Math.max( 0, player.son_geox-1 );
-			if( g_src ){ direct_play(); } // switch off music
-			direct_play();
+			if( g_src ){ direct_play(0); } // switch off music
+			direct_play(0);
 			return;
 		}
 
 		if( event.key=="ArrowRight" ){
 			if(!awb){return;}
 			player.son_geox= Math.min( awb.duration, player.son_geox+1 );
-			if( g_src ){ direct_play(); } // switch off music
-			direct_play();
+			if( g_src ){ direct_play(0); } // switch off music
+			direct_play(0);
 			return;
 		}
 
@@ -643,10 +716,8 @@ _sel("#f").onchange= e=>{
 	r.onload=async e=>{
 
 		if(!aa)aa= new AudioContext();
-		let tmp_buffer= await aa.decodeAudioData( e.target.result );
-		sr= tmp_buffer.sampleRate; // 48000
-		//awb= cloneAudioBuffer(tmp_buffer);
-		awb= tmp_buffer;
+		awb= await aa.decodeAudioData( e.target.result );
+		sr= awb.sampleRate; // 48000
 		if( awb.numberOfChannels<1 || awb.numberOfChannels>2 ){
 			alert("le nombre de canaux ("+ awb.numberOfChannels +") va poser probleme lors des traitements");
 		}
@@ -658,22 +729,92 @@ _sel("#f").onchange= e=>{
 
 		set_zoom_et_position(awb.length/sr*30,0); // reset position et zoom selon taille fichier
 		selectors.home();
+		drawSpectrum();
 	};
 	r.readAsArrayBuffer(file);
 };
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * Dessine le spectre de fréquences d'un AudioBuffer dans un canvas.
+ */
+// _menu_ | d_drawSpectrum
+let drawSpectrum= (hover=player.hover_x)=>{
+    // Taille de la FFT (puissance de 2 pour simplifier)
+    const FFT_SIZE= 256; // fournier transformation
+	let numBins= (FFT_SIZE>>1)+1;
+	let div_2_ftt= 2 / FFT_SIZE;
+
+    // Récupérer les données du premier canal (mono)
+    const channelData= awb.getChannelData(0);
+
+    // Calcul de la DFT (nombres complexe) – version naïve mais suffisante
+    const real= new Float32Array(numBins);
+    const imag= new Float32Array(numBins);
+	let posx= sec_to_pcm(hover);
+	let sumReal = 0.0;
+	let sumImag = 0.0;
+	let pre_angle = 0.0;
+    for( let k= 0; k < numBins; k++ ){
+		sumReal= 0;
+		sumImag= 0;
+        pre_angle= div_2_ftt * Math.PI * k;
+        for( let n= 0; n < FFT_SIZE; n++ ){
+            sumReal += channelData[posx+n] * Math.cos(pre_angle * n);
+            sumImag -= channelData[posx+n] * Math.sin(pre_angle * n); // signe conventionnel
+        }
+        real[k]= sumReal;
+        imag[k]= sumImag;
+    }
+
+	// Dessiner les barres verticales (spectre)
+    for (let k= 0; k < numBins; k++) {
+		colo_by_amp( k, 9+Math.log2( 0.001 + real[k] * real[k] + imag[k] * imag[k]) );
+    }
+};
+
+
+
+// _menu_ | d_colo_by_amp
+let colo_by_amp= (k,amp)=> {
+	/*if( amp<0.2 ){
+			ctx2.fillStyle= '#2c2'; // vert fluo
+			ctx2.fillRect( (5+k)*3, 5, 3, 1 + amp*100 );
+		return;
+	}*/
+    ctx2.fillStyle= '#4a4'; // vert fluo
+	ctx2.fillRect( (5+k)*3, 2, 2, amp*5 );
+};
+
+
+
 // _menu_ | v_play_now
-let direct_play= _=>{
+let direct_play= by_space=>{
 
 	// cette fonction declenche un mini lecteur de quelques secondes car ptin c'est horrible de faire un lecteur sympa
 
 	if( !awb ){ return; }
-	if( g_src ){   delete_preview_audio(null,g_src);   return;   }
+	if( g_src ){   delete_preview_audio(null,g_src,by_space);   return;   }
 
 	let src= aa.createBufferSource();
 	src.ptr_cnt= player.ptr_cnt;
+	src.startnow= Date.now();
+	if( by_space ){   player.auto_seek= src.startnow;   }
+	src.startat= player.son_geox+0.00000169;
 	player.ptr_cnt++;
 
 	let playerBuf= aa.createBuffer(awb.numberOfChannels, awb.length, awb.sampleRate);
@@ -682,7 +823,7 @@ let direct_play= _=>{
 	src.buffer= playerBuf; // importe le buffer Modifié
 	src.connect(aa.destination);
 	// TODO au lieu d'injecter tout un canal, et de seek pour lire, lez go injecter juste ce qu'on prévoit de lire (genre 2 secondes de datas) et multicanaux
-	src.start( 0, player.son_geox+0.00000169 ); // play by position (mais impossible de recup la position en cours) + 0.00000169 pour offset perfect
+	src.start( 0, src.startat ); // play by position (mais impossible de recup la position en cours) + 0.00000169 pour offset perfect
 	g_src= src;   redraw_overlay();
 	_sel("[title='Lecteur'] .value").innerHTML= sec_to_minsec(player.son_geox);
 	setTimeout(_=>{ delete_preview_audio(null,src); }, player.son_dur*1000 );
@@ -692,9 +833,10 @@ let direct_play= _=>{
 
 
 // _menu_ | v_del_mem_player
-let delete_preview_audio= (osef,qui)=>{
+let delete_preview_audio= (osef,qui,by_space)=>{
 
 	qui &&( qui.stop(),   g_src!=null && qui.ptr_cnt==g_src.ptr_cnt? g_src= null: 0,   qui= null );
+	if( by_space ){   player.auto_seek= 0;   }
 	_sel("[title='Lecteur'] .value").innerHTML= sec_to_minsec(player.son_geox);
 	redraw_overlay();
 };
@@ -705,7 +847,7 @@ _sel('#playBtn').addEventListener('click', _=>{
 	press_key({type:"keydown",key:" "});press_key({type:"keyup",key:" "});
 });
 _sel('#stopBtn').addEventListener('click', _=>{
-	if( g_src ){ direct_play(); } // switch off music
+	if( g_src ){ direct_play(0); } // switch off music
 });
 _sel('#rwBtn').addEventListener('click', _=>{
 	press_key({type:"keydown",key:"ArrowLeft"});press_key({type:"keyup",key:"ArrowLeft"});
@@ -733,17 +875,21 @@ _sel('#exportWav').addEventListener('click', _=>{
 	let url= URL.createObjectURL(wavBlob);
 	let ta= document.createElement('a');
 	ta.href= url;
-	ta.download= meta_in.name +" _ "+ Date.now() +".wav";
+	ta.download= meta_in.name +" _ "+ (Date.now()/1000|0) +".wav";
 	ta.click();
 	URL.revokeObjectURL(url);
 });
 
 
 
-_sel('#exportLentWebm').addEventListener('click', _=>{
+_sel('#exportLent').addEventListener('click', _=>{
 
+	let forma= "webm";
+	if(confirm("le format de sortie sera .webm, mais on peut essayer en .ogg ?")){
+		forma= "ogg";
+	}
 	let bps= prompt("attention, save lente. Quelle qualité de sortie? (5000, 7000, 12000 ou 16000 32000 64000)",16000);
-	if( bps==null ){ return; } // todo, ptet ogg opus au lieu de webm pour avoir du 96kbps perfect
+	if( bps==null ){ return; }
 	if( !isNumber(bps) ){ bps= 16000; }
 	bps= Math.max(5000,Math.min(64000,bps));
 	console.info("compression bps: "+bps);
@@ -756,7 +902,7 @@ _sel('#exportLentWebm').addEventListener('click', _=>{
 	lecteur.start(0);
 
 	// 2000(0.9ko/s 5khz) | 9000(1.4ko/s 6khz) , 12000(1.7ko/s 9khz) , 14000(2.2ko/s 20khz), 16000(2.4ko/s 20khz) 32000(4.3ko/s 20khz)
-	const mediaRecorder= new MediaRecorder(destination.stream, { mimeType: 'audio/webm; codecs=opus', audioBitsPerSecond: bps }); // très compressé
+	const mediaRecorder= new MediaRecorder(destination.stream, { mimeType: 'audio/'+forma+'; codecs=opus', audioBitsPerSecond: bps }); // très compressé
 
 	let recordedChunks= []; // stockage de Blob (nouvelles data audio compressés)
 
@@ -783,6 +929,7 @@ _sel('#exportLentWebm').addEventListener('click', _=>{
 
 // _menu_ | v_conv_to_wav
 function audioBufferToWavBlob(buffer){
+	// garder car ultra utile
 	// WAV conversion function (PCM16)
 	let numChannels= buffer.numberOfChannels;
 	let sampleRate= buffer.sampleRate;
@@ -844,10 +991,14 @@ let set_zoom_et_position= ( zoom=0.02, pos=sr*7.9993 )=>{
 	mouse_scroll({ deltaY: 0, layerX: 0, preventDefault: _=>{} })
 };
 
-// effet montée (choix volume -60db & -48db)
-// effet descente (choix volume -60db & -48db)
+
+
+let init= _=>{
+
+	maybe_spectrum();
+};
+
 // normalisation de toute la zone
-// changer volume de selection
 // lez go compresseur
 // auto nettoy (tout juste 200ms de son très faible au début, max 0.1 sec de très faible à la fin, volume normalisé)
 // pouvoir ctrl z selon un histo (8 obligé + math log 2) :D donc 60 max surement et ajouter intercalaire pour changement de position des curseurs
@@ -855,18 +1006,9 @@ let set_zoom_et_position= ( zoom=0.02, pos=sr*7.9993 )=>{
 // touche pour reset zoom x y total
 // faire un script qui detek les bugs, genre olala y'a du son ça bouge et d'un coup vide   ou   y'a des frequences, et d'un coup un tic
 // joli curseur ?
-
+// coller avec merge
 
 // fleme ctrl x
-
-/*
-Pour un analyseur de fréquence plus classique (type barres d’égaliseur), le canvas devrait :
-Utiliser AnalyserNode.getByteFrequencyData(data) au lieu de getByteTimeDomainData.
-Avoir une boucle d’animation continue avec requestAnimationFrame pour dessiner 30–60 fois par seconde.
-Dessiner une barre verticale par « bin » de fréquence : largeur fixe, hauteur proportionnelle à la valeur (0–255) renvoyée.
-Mapper les bins sur l’axe X (de basses à aigus), l’axe Y correspondant au niveau en dB ou amplitude.
-Éventuellement appliquer une échelle logarithmique sur les fréquences pour se rapprocher de la perception humaine.
-*/
 
 // _menu_ | end_of_functions
 
@@ -879,6 +1021,12 @@ d.addEventListener('mousedown',mouse_down,0);
 document.addEventListener('keydown',press_key,0);
 
 document.addEventListener('keyup',press_key,0);
+
+window.addEventListener('load',init,0);
+
+_sel('#btn_volume').addEventListener('click',f_volume,0);
+
+_sel('#btn_analyse_freq').addEventListener('click',f_analyse_freq,0);
 
 </script>
 </body></html>
