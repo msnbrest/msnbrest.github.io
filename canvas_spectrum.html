@@ -1,6 +1,7 @@
-<!doctype html><html><head><meta charset=utf-8><title>Spectrum (webapp audio editor) v3.9</title><style>
+<!doctype html><html><head><meta charset=utf-8><title>Spectrum (webapp audio editor) v4.0</title><style>
 :root{--bg:#0f1720;--panel:#0b1520;--accent:#2dd4bf;--muted:#fad;--track:#071126;--wave:#1fbfa6;--glass:#fff1;}
 body{background:#111;color:#eee;user-select:none;font-family:sans-serif;}   canvas{border:1px solid #444;position:absolute;left:calc(50vw - 800px);bottom:1em;image-rendering:pixelated;image-rendering:crisp-edges;}
+div,header{position:relative;}
 header{padding:0 0 .4em 0;border-bottom:1px solid #fff2;}
 input{margin:10px}   input[type='file']{opacity:.3}   input[type="range"]{filter:invert(1);opacity:.5;}
 .flex{display:flex;} .flex_wrap{flex-wrap:wrap;} .justif_space{justify-content:space-between;} .y_center{align-items:center;}
@@ -8,6 +9,8 @@ pre{position:absolute;left:14em;top:-.4em;padding:0;width:13em;opacity:.6;height
 pre.show{left:0;top:0;width:calc(100vw - 8em);padding:2em 4em;opacity:1;background:#1c1c1cf4;min-height:calc(100vh - 4em);color:#eee;margin:0;}
 button{background:none;border:1px solid #fff3;margin:0 .5em;padding:.4em .77em .52em .8em;border-radius:5px;color:#aaa;cursor:pointer;}
 button:hover{border-color:#fff6;color:#fff}
+
+.zi3{z-index:3;}
 
 .track{position:relative;background:var(--track);margin-bottom:12px;}
 
@@ -18,6 +21,11 @@ button:hover{border-color:#fff6;color:#fff}
 .minicard .value{font-weight:600;color:#fff;font-size:13px;margin-top:4px}
 
 .card{background:#8881;padding:.2em;margin:.4em;border-radius:5px;border:1px solid #ccc2;}
+
+.back_btn{background-repeat:no-repeat;background-position:left center;background-size:contain;padding-left:2.2em;}
+.back_solo_btn{background-repeat:no-repeat;background-position:center center;background-size:contain;min-width:3em;}
+.ico_svg_empty{background-image:url('data:image/svg+xml;utf8,<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" width="100" height="100"><path stroke="rgb(192,192,192)" stroke-width="2px" d="M 4,50 L 8,30 16,50 24,70 32,50 M 68,50 L 76,30 84,50 92,70 96,50"/><path stroke="rgb(128,255,128)" stroke-width="4px" d="M 32,50 L 68,50 z"/></svg>');}
+.ico_svg_vol{background-image:url('data:image/svg+xml;utf8,<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" width="100" height="100"><path stroke="rgb(192,192,192)" stroke-width="3px" d="M 5,50 L 15,40 25,50 35,60 45,50"/><path stroke="rgb(192,255,192)" stroke-width="3px" d="M 55,50 L 65,20 75,50 85,80 95,50"/></svg>');}
 /*
 TODO gui, revoir si pics (reperes duration)
 TODO gui, wow, idée, on pourrait poser des bandeaux d'info dans la musique juste pour memo ce qu'on a capté ou ce qu'on voudrait faire
@@ -29,7 +37,7 @@ TODO ptet, export ogg mono/stereo
 */
 </style></head><body>
 
-<header class="flex flex_wrap justif_space">
+<header class="flex flex_wrap justif_space zi3">
 	<div class="flex y_center"><span id="span_v">Spectrum </span></div>
 	<div>
 		<button id="playBtn" title="Play-Pause">▶︎</button>
@@ -39,14 +47,14 @@ TODO ptet, export ogg mono/stereo
 	<button id="import_file">Importer audio</button>
 	<button id="exportWav">Export (.wav)</button>
 	<button id="exportLent">Export (compressé mais lent)</button>
-	<button id="btn_add_dura_empty">Ajouter du vide</button>
-	<button id="btn_volume">Volume</button>
+	<button id="btn_add_dura_empty" class="back_solo_btn ico_svg_empty ico_is_solo" title="Ajouter du vide">&nbsp;</button>
+	<button id="btn_volume" class="back_solo_btn ico_svg_vol ico_is_solo">&nbsp;</button>
 	<button id="btn_compresseur">Compresseur</button>
 	</div>
 </header>
 
 
-<div class="flex flex_wrap justif_space">
+<div class="flex flex_wrap justif_space zi3">
 
 	<div class="card">
 		<div class="minicard" title="Titre">
@@ -215,7 +223,16 @@ conf= { // TODO modifiable
 	}
 }
 
-keyboard= {};
+keyboard= {},
+
+conf_save= {
+	compr:{
+		"def": [ "2.0", "1.0", "2.0", "2.0", "1.0" ], // def
+		"sat":  [ "0", "0.01", "0.2", "4.0", "0.8" ],
+		"max":  [ "0", "0.1", "4.0", "2.0", "0.88" ],
+		"cool": [ "1.0", "4.0", "4.0", "1.0", "1.0" ],
+	}
+};
 
 
 
@@ -287,16 +304,14 @@ let f_volume= _=>{
 	let t_cur= m_debut;
 	let t_max= sec_to_pcm(selectors.sel2)+1;
 	let m_offset= t_max-m_debut;
-	let can0= awb.getChannelData(0);
-// TODO ajouter optionnalité   if( awb.numberOfChannels>1 ){
-	let can1= awb.getChannelData(1);
-	let tmp_v= 0.0;
 	let edit_gauche= confirm("modifier canal gauche?");
-	let edit_droite= confirm("modifier canal droite?");
+	let edit_droite= awb.numberOfChannels>1 && confirm("modifier canal droite?");
+	let can0= edit_gauche ? awb.getChannelData(0) : null;
+	let can1= edit_droite ? awb.getChannelData(1) : null;
+	let tmp_v= 0.0;
 	while( t_cur<t_max ){
 		tmp_v= vol_1+vol_2*(t_cur-m_debut)/m_offset;
 		edit_gauche &&( can0[t_cur]= Math.max(-1,Math.min(can0[t_cur]*tmp_v,1)) );
-// TODO ajouter optionnalité   if( awb.numberOfChannels>1 ){
 		edit_droite &&( can1[t_cur]= Math.max(-1,Math.min(can1[t_cur]*tmp_v,1)) );
 		t_cur++;
 	}
@@ -308,25 +323,41 @@ let f_volume= _=>{
 // _menu_ | e_analyse_freq
 let f_compresseur= _=>{
 
-	let one_of_ten= 1;
-	let vals= [];
+	let keys= Object.keys(conf_save.compr);
+// todo ptet, pouvoir exporter la config temporaire qu'on a modifié, chepa
+	let nom_conf= prompt("Choisir un mode (ou ignorer) parmis : "+ keys.slice(1).join(", "), "" );
+	if( !keys.includes(nom_conf) ){ nom_conf="def"; }
 
-	// de 0 à 1 (norm 0.001)
-	let config_speed1= 2.0; // delay descente lors d'un over audio
-	config_speed1= 1.0/(sr*config_speed1);
+	let pr1= prompt( "delai compresseur : de 0s à 9999999s", conf_save.compr[nom_conf][0] ); // 1e44
+	if( !isNumber(pr1) ){ return; }
+	let config_speed1= 1.0/Math.max(8,sr*Math.max(0.000001,+pr1)); // delay descente lors d'un over audio
 
-	// de 0 à 1 (norm 0.001)
-	//let config_speed2= 0.1; // delay remontée lorsque tranquille
-	//config_speed2= 1.0/(sr*config_speed2);
-
-	// de 0 à 99999.999s (norm 1s)
-	let config_waiting= 1.0; // delay blocage avant remontée
+	let pr2= prompt( "delai blocage avant relachement : 0 à 1e19", conf_save.compr[nom_conf][1] );
+	if( !isNumber(pr2) ){ return; }
+	let config_waiting= +pr2; // delay blocage avant remontée
 	config_waiting= config_waiting*sr|0;
 
-	let vol_out= 1.0; // volume voulu de sortie
+	let waiter1= 0;
+	let waiter2= 0;
 
-	let waiter1= config_waiting;
-	let waiter2= config_waiting;
+	let pr3= prompt( "delai relachement : de 0s à 9999999s", conf_save.compr[nom_conf][2] ); // 1e44
+	if( !isNumber(pr3) ){ return; }
+	let config_speed2= 1.0/Math.max(8,sr*Math.max(0.000001,+pr3)); // delay remontée lorsque tranquille
+
+	let pr4= prompt( "volume forcé au début : 0 à 1e45", conf_save.compr[nom_conf][3] );
+	if( !isNumber(pr4) ){ return; }
+	let tmp_v1= +pr4;
+	let tmp_v2= +pr4;
+
+	let pr5= prompt( "volume souhaité au global : 0 à 1e44", conf_save.compr[nom_conf][4] );
+	if( !isNumber(pr5) ){ return; }
+	let vol_out= +pr5 // volume voulu de sortie
+
+	conf_save.compr[nom_conf][0]= pr1;
+	conf_save.compr[nom_conf][1]= pr2;
+	conf_save.compr[nom_conf][2]= pr3;
+	conf_save.compr[nom_conf][3]= pr4;
+	conf_save.compr[nom_conf][4]= pr5;
 
 	_sel('#btn_compresseur').blur();
 	if( selectors.sel2==null ){ return; }
@@ -334,49 +365,49 @@ let f_compresseur= _=>{
 	let m_debut= sec_to_pcm(selectors.sel1);
 	let t_cur= m_debut;
 	let t_max= sec_to_pcm(selectors.sel2)+1;
-	let can0= awb.getChannelData(0);
-// TODO ajouter optionnalité   if( awb.numberOfChannels>1 ){
-	let can1= awb.getChannelData(1);
-	let tmp_v1= 1.0;
-	let tmp_v2= 1.0;
-	let edit_gauche= true || confirm("modifier canal gauche?");
-	let edit_droite= true || confirm("modifier canal droite?");
+	let edit_gauche= confirm("modifier canal gauche?");
+	let edit_droite= awb.numberOfChannels>1 && confirm("modifier canal droite?");
+	let can0= edit_gauche ? awb.getChannelData(0) : null;
+	let can1= edit_droite ? awb.getChannelData(1) : null;
 	while( t_cur<t_max ){
 
+	if( edit_gauche ){
 		if( can0[t_cur]>0.0 ){
 			if( can0[t_cur]*tmp_v1<vol_out ){
-				waiter1<config_waiting ?( waiter1++ ):( tmp_v1+=config_speed1 );
+				waiter1<config_waiting ?( waiter1++ ):( tmp_v1+=config_speed2 );
 			}else{
-				tmp_v1= tmp_v1*(vol_out/(can0[t_cur]*tmp_v1));
+				tmp_v1= Math.max(0,tmp_v1-config_speed1);
 				waiter1= 0;
 			}
 		}else{
 			if( can0[t_cur]*tmp_v1>-vol_out ){
-				waiter1<config_waiting ?( waiter1++ ):( tmp_v1+=config_speed1 );
+				waiter1<config_waiting ?( waiter1++ ):( tmp_v1+=config_speed2 );
 			}else{
-				tmp_v1= tmp_v1*(vol_out/(-can0[t_cur]*tmp_v1));
+				tmp_v1= Math.max(0,tmp_v1-config_speed1);
 				waiter1= 0;
 			}
 		}
+	}
 
+	if( edit_droite ){
 		if( can1[t_cur]>0.0 ){
 			if( can1[t_cur]*tmp_v2<vol_out ){
-				waiter2<config_waiting ?( waiter2++ ):( tmp_v2+=config_speed1 );
+				waiter2<config_waiting ?( waiter2++ ):( tmp_v2+=config_speed2 );
 			}else{
-				tmp_v2= tmp_v2*(vol_out/(can1[t_cur]*tmp_v2));
+				tmp_v2= Math.max(0,tmp_v2-config_speed1);
 				waiter2= 0;
 			}
 		}else{
 			if( can1[t_cur]*tmp_v2>-vol_out ){
-				waiter2<config_waiting ?( waiter2++ ):( tmp_v2+=config_speed1 );
+				waiter2<config_waiting ?( waiter2++ ):( tmp_v2+=config_speed2 );
 			}else{
-				tmp_v2= tmp_v2*(vol_out/(-can1[t_cur]*tmp_v2));
+				tmp_v2= Math.max(0,tmp_v2-config_speed1);
 				waiter2= 0;
 			}
 		}
+	}
 
 		edit_gauche &&( can0[t_cur]= Math.max(-1,Math.min(can0[t_cur]*tmp_v1,1)) );
-// TODO ajouter optionnalité   if( awb.numberOfChannels>1 ){
 		edit_droite &&( can1[t_cur]= Math.max(-1,Math.min(can1[t_cur]*tmp_v2,1)) );
 		t_cur++;
 	}
@@ -564,21 +595,17 @@ let cpb={
 		let at= sec_to_pcm(selectors.sel1);
 		let t_cur= 0;
 
+		let edit_gauche= confirm("modifier canal gauche?");
+		let edit_droite= awb.numberOfChannels>1 && confirm("modifier canal droite?");
+
 		let can0= awb.getChannelData(0);
-// TODO ajouter optionnalité   if( awb.numberOfChannels>1 ){
-		let can1= awb.getChannelData(1);
+		let can1= edit_droite && awb.getChannelData(1);
 
 		let tmp0= cpb.buffer.getChannelData(0);
-// TODO ajouter optionnalité   if( awb.numberOfChannels>1 ){
-		let tmp1= cpb.buffer.getChannelData(1);
-
-		let edit_gauche= confirm("modifier canal gauche?");
-// TODO ajouter optionnalité   if( awb.numberOfChannels>1 ){
-		let edit_droite= confirm("modifier canal droite?");
+		let tmp1= edit_droite && cpb.buffer.getChannelData(1);
 
 		while( t_cur<cpb.dur ){
 			edit_gauche &&( can0[at+t_cur]= Math.max(-1,Math.min(can0[at+t_cur]+tmp0[t_cur],1)) );
-	// TODO ajouter optionnalité   if( awb.numberOfChannels>1 ){
 			edit_droite &&( can1[at+t_cur]= Math.max(-1,Math.min(can1[at+t_cur]+tmp1[t_cur],1)) );
 			t_cur++;
 		}
@@ -598,7 +625,7 @@ let redraw_onde= _=>{
 	_sel("#infos").innerHTML= "de "+ start +" ("+ sec_to_minsec( start/sr ) +" s à "+ sec_to_minsec( (start+zoom_x*w)/sr ) +" s) x "+( zoom_x|0 );
 
 	draw_trum_moy( zoom_x>128, 0, conf.colors.wave1 );
-	draw_trum_moy( zoom_x>128, 1, conf.colors.wave2 );
+	if( awb.numberOfChannels>1 ){ draw_trum_moy( zoom_x>128, 1, conf.colors.wave2 ); }
 };
 
 
@@ -865,7 +892,7 @@ function press_key(event){
 			return;
 		}
 
-		if( event.key==" " ){
+		if( event.key==" " ){ // space
 			direct_play(1);
 			keyboard= {};
 			return;
@@ -1087,6 +1114,9 @@ let direct_play= by_space=>{
 	src.start( 0, src.startat ); // play by position (mais impossible de recup la position en cours) + 0.00000169 pour offset perfect
 	g_src= src;   redraw_overlay();
 	_sel("[title='Lecteur'] .value").innerHTML= sec_to_minsec( player.pos_if_play );
+
+	setTimeout(_=>{ delete_preview_audio(null,src); }, ((awb.length/sr)-src.startat)*1000 );
+
 	if( !by_space ){ setTimeout(_=>{ delete_preview_audio(null,src); }, 2000 ); } // duration preview if other mode
 
 };
@@ -1524,6 +1554,12 @@ fix: keyboard release = full reset
 fix can select after zoom
 fix invert draw
 COMPRESSEUR AUDIO ENFIN !!! (20minutes à coder) simple en fait, pourquoi tout le monde galère à créer un compresseur jcomprend pas
+
+4.0
+cursor destroy at end
+conf save compr &
+compresseur encore meilleur o_o
+TODO icons
 
 */
 
