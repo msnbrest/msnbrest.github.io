@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf-8><title>Spectrum (webapp audio editor) v4.0</title><style>
+<!doctype html><html><head><meta charset=utf-8><title>Spectrum (webapp audio editor) v4.03</title><style>
 :root{--bg:#0f1720;--panel:#0b1520;--accent:#2dd4bf;--muted:#fad;--track:#071126;--wave:#1fbfa6;--glass:#fff1;}
 body{background:#111;color:#eee;user-select:none;font-family:sans-serif;}   canvas{border:1px solid #444;position:absolute;left:calc(50vw - 800px);bottom:1em;image-rendering:pixelated;image-rendering:crisp-edges;}
 div,header{position:relative;}
@@ -29,11 +29,13 @@ button:hover{border-color:#fff6;color:#fff}
 /*
 TODO gui, revoir si pics (reperes duration)
 TODO gui, wow, idée, on pourrait poser des bandeaux d'info dans la musique juste pour memo ce qu'on a capté ou ce qu'on voudrait faire
-TODO wow, idée, muter un canal à l'écoute
-TODO selectionner un canal pour l'éditer
+TODO wow, idée, muter un/des canaux à l'écoute ou pour edit (volume, insert, merge, compress)
 TODO pouvoir editer un pixel via move y, et un bouton switch pour éditer plusieurs lorsque move x
 TODO un algo pour smooth une selection (genre éviter les variations trop absurde entre deux pixels selon variation d'autour
 TODO ptet, export ogg mono/stereo
+TODO lorsque export, alors indiquer une instance de message avec pourcentage et temps restant
+TODO limiter compresseur à x puissance de volume
+TODO + et - is zoom selon center
 */
 </style></head><body>
 
@@ -117,7 +119,6 @@ Spectrum permet d'exporter en wav, un fichier contenant 1 à 2 canaux audio, don
 
 > [F11] activer/désactiver le mode plein écran
 > [scroll] pour zoomer et dezoomer (avec centrage recalculé)
-> [espace] pour écouter 2 secondes (selon position selecteur)
 > touches [gauche] et [droite] pour déplacer le lecteur temporaire (et autoplay)
 > [clic] pour déplacer le selecteur
 > [shift] + [clic] pour selectionner une zone depuis le pointeur 1
@@ -191,7 +192,6 @@ end_of_functions
 // TODO dans Navigation, lorsque scroll alors update auto input
 // et lorsque edit human input alors update display zoom
 // pareil pour position lecteur.
-// TODO fix bug curseur qui lit hors des datas, s'arrete pas à fin
 // unused: bufToWavBlob_int
 
 let _sel= sel=> document.querySelector(sel),
@@ -205,7 +205,6 @@ player= {
 	pos_if_play: 0, // timecode du lecteur temporaire en seconde
 	ptr_cnt: 0,
 	audio_oqp: 0,
-	auto_seek: 0,
 	ifr: 0, // inter frame
 },
 conf= { // TODO modifiable
@@ -230,7 +229,7 @@ conf_save= {
 		"def": [ "2.0", "1.0", "2.0", "2.0", "1.0" ], // def
 		"sat":  [ "0", "0.01", "0.2", "4.0", "0.8" ],
 		"max":  [ "0", "0.1", "4.0", "2.0", "0.88" ],
-		"cool": [ "1.0", "4.0", "4.0", "1.0", "1.0" ],
+		"cool": [ "0.01", "0.5", "20.0", "2.0", "0.99" ],
 	}
 };
 
@@ -481,6 +480,8 @@ let selectors= {
 
 	fantom: null, // position faux selecteur virtuelle
 
+	last_mmove: w2, // mouse moved mem
+
 	home: _=>{
 
 		player.hover= -0.0000002; // besoin d'un nombre légèrement negatif sec pour coller avant pixel (car selection parfaite)
@@ -514,6 +515,7 @@ let selectors= {
 
 		if(!awb){return;}
 
+		selectors.last_mmove= event.layerX;
 		player.hover= Math.max(0,Math.min(awb.duration, (zoom_x/sr)*(start/zoom_x+event.layerX) )); // à taton, et ça a marché
 		_sel("[title='Curseur'] .value").innerHTML= sec_to_minsec(player.hover);
 	},
@@ -775,12 +777,6 @@ let maybe_trum= _=>{
 
 	if( !g_src ){ return; }
 
-	// old version usine
-	/*if( player.auto_seek!=0 && Date.now()-player.auto_seek>=1000 ){
-		player.auto_seek+= (Date.now()-player.auto_seek);
-		press_key({type:"keydown",key:"ArrowRight"});press_key({type:"keyup",key:"ArrowRight"});
-	}*/
-
 	let pos_ptet_sec= g_src.startat + (Date.now()-g_src.startnow)/1000; // je suppute que le player se trouve ici
 	player.pos_if_play= pos_ptet_sec;
 	redraw_overlay();
@@ -809,7 +805,7 @@ function mouse_down(event){
 	selectors.sel2= null;
 	_sel("[title='Selecteur2'] .value").innerHTML= '';
 	redraw_overlay();
-	if( g_src ){ direct_play(0); direct_play(0); } // switch off music
+	if( g_src ){ direct_play(); direct_play(); } // switch off music
 }
 
 
@@ -893,7 +889,7 @@ function press_key(event){
 		}
 
 		if( event.key==" " ){ // space
-			direct_play(1);
+			direct_play();
 			keyboard= {};
 			return;
 		}
@@ -923,12 +919,24 @@ function press_key(event){
 			return;
 		}
 
+		if( event.key=="+" ){
+
+			mouse_scroll({ deltaY: -4, layerX: selectors.last_mmove, preventDefault: _=>{} })
+			return;
+		}
+
+		if( event.key=="-" ){
+
+			mouse_scroll({ deltaY: 4, layerX: selectors.last_mmove, preventDefault: _=>{} })
+			return;
+		}
+
 		if( event.key=="ArrowLeft" ){ // TODO warn, quand je spam a mort les touches et que ça play, bah au bout d'un moment y'a saturation gestion pendant qq secondes
 			keyboard= {};
 			if(!awb){return;}
 			player.pos_if_play= Math.max( 0, player.pos_if_play-1 );
-			if( g_src ){ direct_play(0); } // switch off music
-			direct_play(0);
+			if( g_src ){ direct_play(); } // switch off music
+			direct_play();
 			return;
 		}
 
@@ -936,8 +944,8 @@ function press_key(event){
 			keyboard= {};
 			if(!awb){return;}
 			player.pos_if_play= Math.min( awb.duration, player.pos_if_play+1 );
-			if( g_src ){ direct_play(0); } // switch off music
-			direct_play(0);
+			if( g_src ){ direct_play(); } // switch off music
+			direct_play();
 			return;
 		}
 
@@ -1092,17 +1100,16 @@ let draw_trum= _=>{
 
 
 // _menu_ | v_play_now
-let direct_play= by_space=>{
+let direct_play= _=>{
 
 	// cette fonction declenche un mini lecteur de quelques secondes car ptin c'est horrible de faire un lecteur sympa
 
 	if( !awb ){ return; }
-	if( g_src ){   delete_preview_audio(null,g_src,by_space);   return;   }
+	if( g_src ){   delete_preview_audio(null,g_src);   return;   }
 
 	let src= aa.createBufferSource();
 	src.ptr_cnt= player.ptr_cnt;
 	src.startnow= Date.now();
-	if( by_space ){   player.auto_seek= src.startnow;   } // old version usine
 	src.startat= player.pos_if_play + 0.00000169;
 	player.ptr_cnt++;
 
@@ -1117,17 +1124,14 @@ let direct_play= by_space=>{
 
 	setTimeout(_=>{ delete_preview_audio(null,src); }, ((awb.length/sr)-src.startat)*1000 );
 
-	if( !by_space ){ setTimeout(_=>{ delete_preview_audio(null,src); }, 2000 ); } // duration preview if other mode
-
 };
 
 
 
 // _menu_ | v_del_mem_player
-let delete_preview_audio= (osef,qui,by_space)=>{
+let delete_preview_audio= (osef,qui)=>{
 
 	qui &&( qui.stop(),   g_src!=null && qui.ptr_cnt==g_src.ptr_cnt?( g_src.buffer= null, g_src= null ): 0,   qui= null ); // -ram
-	if( by_space ){   player.auto_seek= 0;   }
 	_sel("[title='Lecteur'] .value").innerHTML= sec_to_minsec( player.pos_if_play );
 	redraw_overlay();
 };
@@ -1140,7 +1144,7 @@ _sel('#playBtn').addEventListener('click', _=>{
 });
 _sel('#stopBtn').addEventListener('click', _=>{
 	_sel('#stopBtn').blur();
-	if( g_src ){ direct_play(0); } // switch off music
+	if( g_src ){ direct_play(); } // switch off music
 });
 _sel('#rwBtn').addEventListener('click', _=>{
 	_sel('#rwBtn').blur();
@@ -1351,11 +1355,12 @@ let init= _=>{
 
 };
 
+// autres TODO
 // volume normalisé max sur une zone
-// compresseur
-// multi curseurs memo avec possibilité de clic bouton pour auto selection
+// multi curseurs memo avec possibilité de clic zone pour auto selection
+// buttons au lieu de que clavier
 // merge decroissant (baisse volume puis remontée, choisir les volumes, et le pourcentage d'où y'a bascule)
-// auto nettoy (tout juste 200ms de son très faible au début, max 0.1 sec de très faible à la fin, volume normalisé)
+// auto nettoy (tout juste 200ms de son très faible au début, max 0.1 sec de très faible à la fin, + auto volume normalisé 100% à 150% selon quantité hors limite)
 // pouvoir ctrl z selon un histo (4 obligé + math log 2) :D donc 50 max (pour datas et positions curseurs)
 // save toutes les manip en cas de crash on peut auto retry !
 // limiter position visuelle de fin, pas hors écran quoi
@@ -1560,6 +1565,9 @@ cursor destroy at end
 conf save compr &
 compresseur encore meilleur o_o
 TODO icons
+
+4.03
+ajout zoom par touches + -
 
 */
 
